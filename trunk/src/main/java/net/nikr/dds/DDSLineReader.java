@@ -1,20 +1,20 @@
 /*
- * DDSLineReader.java - This file is part of NiKR.NET DDS Reader
+ * DDSLineReader.java - This file is part of Java DDS ImageIO Plugin
  *
- * Copyright (C) 2007 Niklas Kyster Rasmussen
+ * Copyright (C) 2011 Niklas Kyster Rasmussen
  *
- * NiKR.NET DDS Reader is free software; you can redistribute it and/or
+ * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * NiKR.NET DDS Reader is distributed in the hope that it will be useful,
+ * Java DDS ImageIO Plugin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with NiKR.NET DDS Reader; if not, write to the Free Software
+ * along with Java DDS ImageIO Plugin; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
@@ -108,63 +108,6 @@ public class DDSLineReader {
 		lineNumber++;
 	}
 	
-	/*
-	private void readDXT1(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
-		if (lineNumber >= 4 ) lineNumber = 0;
-		if (lineNumber == 0){
-			//System.out.println("Read line: "+y);
-			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
-			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
-				decodeColorBlock(stream, ddsHeader, banks, x);
-			}
-		}
-		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
-			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
-			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
-			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
-			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
-		}
-		lineNumber++;
-	}
-	private void readDXT3(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
-		if (lineNumber >= 4 ) lineNumber = 0;
-		if (lineNumber == 0){
-			//System.out.println("Read line: "+y);
-			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
-			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
-				decodeDXT3AlphaBlock(stream, ddsHeader, x);
-				decodeColorBlock(stream, ddsHeader, banks, x);
-			}
-		}
-		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
-			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
-			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
-			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
-			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
-		}
-		lineNumber++;
-	}
-	private void readDXT5(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
-		if (lineNumber >= 4 ) lineNumber = 0;
-		if (lineNumber == 0){
-			//System.out.println("Read line: "+y);
-			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
-			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
-				decodeDXT5AlphaBlock(stream, ddsHeader, x);
-				decodeColorBlock(stream, ddsHeader, banks, x);
-			}
-		}
-		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
-			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
-			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
-			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
-			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
-		}
-		lineNumber++;
-	}
-	 * 
-	 */
-
 	private void decodeColorBlock(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, int x) throws IOException{
 		int c0lo, c0hi, c1lo, c1hi, bits0, bits1, bits2, bits3;
 		

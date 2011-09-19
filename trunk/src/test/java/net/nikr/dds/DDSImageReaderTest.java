@@ -1,6 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * DDSImageReaderTest.java - This file is part of Java DDS ImageIO Plugin
+ *
+ * Copyright (C) 2011 Niklas Kyster Rasmussen
+ *
+ * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * Java DDS ImageIO Plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Java DDS ImageIO Plugin; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ *
+ * FILE DESCRIPTION:
+ * [TODO] DESCRIPTION
  */
 
 package net.nikr.dds;
@@ -24,58 +42,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-/**
- *
- * @author NKR
- */
+
 public class DDSImageReaderTest {
 	
-	//A8R8G8B8 - OK
-	private static final String testfile = "src\\test\\resources\\net\\nikr\\dds\\test_image.dds";
-	private static final int mipMaps = 1;
-	private static final int nWidth = 256;
-	private static final int nHeight = 256;
-	
-	//DXT1 (no Alpha) - OK
-	/*
-	private static final String testfile = "test_image-bc1c.dds";
-	private static final int mipMaps = 1;
-	private static final int nWidth = 256;
-	private static final int nHeight = 256;
-	
-	 */
-	
-	//DXT1 (1bit Alpha) - OK
-	/*
-	private static final String testfile = "test_image-bc1a.dds";
-	private static final int mipMaps = 1;
-	private static final int nWidth = 256;
-	private static final int nHeight = 256;
-	 */
-	
-	//DXT3 - OK
-	/*
-	private static final String testfile = "test_image-bc2.dds";
-	private static final int mipMaps = 1;
-	private static final int nWidth = 256;
-	private static final int nHeight = 256;
-	 */
-	
-	//DXT5 - OK
-	/*
-	private static final String testfile = "test_image-bc3.dds";
-	private static final int mipMaps = 1;
-	private static final int nWidth = 256;
-	private static final int nHeight = 256;
-	 */
-	
-	//DXT1 (With 8 mipMaps)
-	/*
-	private static final String testfile = "acids.dds";
-	private static final int mipMaps = 8;
-	private static final int nWidth = 128;
-	private static final int nHeight = 128;
-	 */
+	private final TestParams[] params = {
+		new TestParams("test_image.dds", 1, 256, 256),		//A8R8G8B8 - OK
+		new TestParams("test_image-bc1c.dds", 9, 256, 256),	//DXT1 (no Alpha) - OK
+		new TestParams("test_image-bc1a.dds", 9, 256, 256),	//DXT1 (1bit Alpha) - OK
+		new TestParams("test_image-bc2.dds", 9, 256, 256),	//DXT3 - OK
+		new TestParams("test_image-bc3.dds", 9, 256, 256),	//DXT5 - OK
+		new TestParams("acids.dds", 8, 128, 128),			//DXT1 (With 8 mipMaps)
+	};
     
 	
 	@BeforeClass
@@ -101,12 +78,14 @@ public class DDSImageReaderTest {
 	@Test
 	public void testSetInput() {
 		System.out.println("setInput");
-		Object input = getInput();
-		boolean seekForwardOnly = false;
-		boolean ignoreMetadata = false;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		instance.setInput(input, seekForwardOnly, ignoreMetadata);
-		assertEquals(input, instance.getInput());
+		for (int i = 0; i < params.length; i++){
+			Object input = getInput(i);
+			boolean seekForwardOnly = false;
+			boolean ignoreMetadata = false;
+			DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+			instance.setInput(input, seekForwardOnly, ignoreMetadata);
+			assertEquals(input, instance.getInput());
+		}
 	}
 
 	/**
@@ -115,11 +94,13 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetNumImages() throws Exception {
 		System.out.println("getNumImages");
-		boolean allowSearch = false;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		instance.setInput( getInput() );
-		int result = instance.getNumImages(allowSearch);
-		assertEquals(mipMaps, result);
+		for (int i = 0; i < params.length; i++){
+			boolean allowSearch = false;
+			DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+			instance.setInput( getInput(i) );
+			int result = instance.getNumImages(allowSearch);
+			assertEquals(params[i].getMipMaps(), result);
+		}
 	}
 
 	/**
@@ -128,12 +109,14 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetWidth() throws Exception {
 		System.out.println("getWidth");
-		int imageIndex = 0;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		instance.setInput( getInput() );
-		int result = instance.getWidth(imageIndex);
-		System.out.println(result);
-		assertEquals(result, nWidth / (imageIndex+1));
+		for (int i = 0; i < params.length; i++){
+			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
+				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+				instance.setInput( getInput(i) );
+				int result = instance.getWidth(imageIndex);
+				assertEquals(result, params[i].getWidth() / (imageIndex+1));
+			}
+		}
 	}
 
 	/**
@@ -142,31 +125,32 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetHeight() throws Exception {
 		System.out.println("getHeight");
-		int imageIndex = 0;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		instance.setInput( getInput() );
-		int result = instance.getHeight(imageIndex);
-		assertEquals(result, nHeight / (imageIndex+1));
+		for (int i = 0; i < params.length; i++){
+			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
+				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+				instance.setInput( getInput(i) );
+				int result = instance.getHeight(imageIndex);
+				assertEquals(result, params[i].getHeight() / (imageIndex+1));
+			}
+		}
 	}
 
 	/**
 	 * Test of getImageTypes method, of class DDSImageReader.
 	 */
-	/*
 	@Test
 	public void testGetImageTypes() throws Exception {
 		System.out.println("getImageTypes");
-		int imageIndex = 0;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		instance.setInput( getInput() );
-		Iterator<ImageTypeSpecifier> expResult = null;
-		Iterator<ImageTypeSpecifier> result = instance.getImageTypes(imageIndex);
-		assertEquals(expResult, result);
-		// TODO review the generated test code and remove the default call to fail.
-		fail("The test case is a prototype.");
+		for (int i = 0; i < params.length; i++){
+			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
+				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+				instance.setInput( getInput(i) );
+				ImageTypeSpecifier expResult = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
+				ImageTypeSpecifier result = instance.getImageTypes(imageIndex).next();
+				assertEquals(expResult, result);
+			}
+		}
 	}
-	 * 
-	 */
 
 	/**
 	 * Test of getStreamMetadata method, of class DDSImageReader.
@@ -197,25 +181,21 @@ public class DDSImageReaderTest {
 	@Test
 	public void testRead() throws Exception {
 		System.out.println("read");
-		assertNotNull( getImage(testfile) );
-		
-		/*
-		int imageIndex = 0;
-		ImageReadParam param = null;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		instance.setInput( getInput() );
-		BufferedImage expResult = null;
-		BufferedImage result = instance.read(imageIndex, param);
-		assertEquals(expResult, result);
-		// TODO review the generated test code and remove the default call to fail.
-		fail("The test case is a prototype.");
-		 */
+		for (int i = 0; i < params.length; i++){
+			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
+				ImageReadParam param = null;
+				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+				instance.setInput( getInput(i) );
+				BufferedImage result = instance.read(imageIndex, param);
+				assertNotNull(result);
+			}
+		}
 	}
 	
-	private Object getInput(){
+	private Object getInput(int i){
 		Object input = null;
 		try {
-			input = new FileImageInputStream(new File(testfile));
+			input = new FileImageInputStream(new File(params[i].getFilename()));
 		} catch (FileNotFoundException ex) {
 			fail("File not found.");
 		} catch (IOException ex) {
@@ -223,10 +203,11 @@ public class DDSImageReaderTest {
 		}
 		return input;
 	}
-	private BufferedImage getImage(String filename){
+	
+	private BufferedImage getImage(int i){
 		BufferedImage image = null;
 		try {
-			ImageInputStream iis = ImageIO.createImageInputStream(new File(testfile));
+			ImageInputStream iis = ImageIO.createImageInputStream(new File(params[i].getFilename()));
 			Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix ("dds");
 			ImageReader reader = (ImageReader) iter.next();
 			reader.setInput (iis, true);
@@ -247,5 +228,36 @@ public class DDSImageReaderTest {
 		}
 		 */
 		return image;
+	}
+	
+	private class TestParams{
+		private final String dir = "src\\test\\resources\\net\\nikr\\dds\\";
+		private String filename;
+		private int mipMaps;
+		private int width;
+		private int height;
+
+		public TestParams(String filename, int mipMaps, int width, int height) {
+			this.filename = filename;
+			this.mipMaps = mipMaps;
+			this.width = width;
+			this.height = height;
+		}
+
+		public String getFilename() {
+			return dir+filename;
+		}
+
+		public int getHeight() {
+			return height;
+		}
+
+		public int getMipMaps() {
+			return mipMaps;
+		}
+
+		public int getWidth() {
+			return width;
+		}
 	}
 }
