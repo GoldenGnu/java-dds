@@ -46,12 +46,27 @@ import static org.junit.Assert.*;
 public class DDSImageReaderTest {
 	
 	private final TestParams[] params = {
+		new TestParams("acids.dds", 8, 128, 128),			//DXT1 (With 8 mipMaps)
+		new TestParams("ATI1N.dds", 1, 256, 256),			//ATI1N - OK?
+		new TestParams("ATI2N.dds", 1, 256, 256),			//ATI2N - OK?
+		new TestParams("ATI2N_alt.dds", 1, 256, 256),		//ATI2N - OK?
+		new TestParams("dxt1.dds", 1, 256, 256),			//DXT1 - OK
+		new TestParams("dxt3.dds", 1, 256, 256),			//DXT3 - OK
+		new TestParams("dxt5.dds", 1, 256, 256),			//DXT5 - OK
+		new TestParams("dxt5_ati2n.dds", 1, 256, 256),		//DXT5 - OK
+		new TestParams("dxt5_rbxg.dds", 1, 256, 256),		//DXT5 - OK
+		new TestParams("dxt5_rgxb.dds", 1, 256, 256),		//DXT5 - OK
+		new TestParams("dxt5_rxbg.dds", 1, 256, 256),		//DXT5 - OK
+		new TestParams("dxt5_xgbr.dds", 1, 256, 256),		//DXT5 - OK
+		new TestParams("dxt5_xgxr.dds", 1, 256, 256),		//DXT5 - OK
+		new TestParams("dxt5_xrbg.dds", 1, 256, 256),		///DXT5 - OK
 		new TestParams("test_image.dds", 1, 256, 256),		//A8R8G8B8 - OK
 		new TestParams("test_image-bc1c.dds", 9, 256, 256),	//DXT1 (no Alpha) - OK
 		new TestParams("test_image-bc1a.dds", 9, 256, 256),	//DXT1 (1bit Alpha) - OK
 		new TestParams("test_image-bc2.dds", 9, 256, 256),	//DXT3 - OK
 		new TestParams("test_image-bc3.dds", 9, 256, 256),	//DXT5 - OK
-		new TestParams("acids.dds", 8, 128, 128),			//DXT1 (With 8 mipMaps)
+		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI1N - OK?
+		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI2N - OK?
 	};
     
 	
@@ -189,6 +204,21 @@ public class DDSImageReaderTest {
 				BufferedImage result = instance.read(imageIndex, param);
 				assertNotNull(result);
 			}
+		}
+	}
+	
+	/**
+	 * Test of ImageIO
+	 */
+	@Test
+	public void testImageIO() throws Exception {
+		System.out.println("ImageIO");
+		try {
+			for (TestParams param : params){
+				ImageIO.read(new File(param.getFilename()));
+			}
+		} catch (IOException ex) {
+			fail("testImageIO fail");
 		}
 	}
 	
