@@ -1,5 +1,5 @@
 /*
- * PixelFormat.java - This file is part of Java DDS ImageIO Plugin
+ * DDSPixelFormat.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
  *
@@ -25,7 +25,7 @@
 package net.nikr.dds;
 
 
-public class PixelFormat {
+public class DDSPixelFormat {
 	//Flags
 	public static final int RGB = 0x00000040;
 	public static final int ALPHAPIXELS = 0x1; //0x00000001;
@@ -39,6 +39,8 @@ public class PixelFormat {
 		DXT3	(0x33545844, "DXT3"),
 		DXT4	(0x34545844, "DXT4"),
 		DXT5	(0x35545844, "DXT5"),
+		ATI1N	(0x31495441, "ATI1N"),
+		ATI2N	(0x32495441, "ATI2N"),
 		A8R8G8B8(0,"RGB (A8R8G8B8)"), //FIXME no fourCC flag
 		R8G8B8	(0,"RGB (R8G8B8)"), //FIXME no fourCC flag
 		X8R8G8B8(0,"RGB (X8R8G8B8)"); //FIXME no fourCC flag
@@ -69,9 +71,9 @@ public class PixelFormat {
 	private int bBitMask;
     private int rgbAlphaBitMask;
 	/**
-	 * Creates a new instance of PixelFormat
+	 * Creates a new instance of DDSPixelFormat
 	 */
-	public PixelFormat(int size, int flags, int fourCC, int rgbBitCount, int rBitMask, int gBitMask, int bBitMask, int rgbAlphaBitMask) {
+	public DDSPixelFormat(int size, int flags, int fourCC, int rgbBitCount, int rBitMask, int gBitMask, int bBitMask, int rgbAlphaBitMask) {
 		this.size = size;
 		this.flags = flags;
 		this.fourCC = fourCC;
@@ -115,6 +117,8 @@ public class PixelFormat {
 		if (isDXT3()) return Format.DXT3;
 		if (isDXT4()) return Format.DXT4;
 		if (isDXT5()) return Format.DXT5;
+		if (isATI1N()) return Format.ATI1N;
+		if (isATI2N()) return Format.ATI2N;
 		
 		return Format.NOT_DDS;
 	}
@@ -145,6 +149,12 @@ public class PixelFormat {
 	public boolean isDXT5(){
 		return (fourCC == Format.DXT5.getFourCC());
 	}
+	public boolean isATI1N(){
+		return (fourCC == Format.ATI1N.getFourCC());
+	}
+	public boolean isATI2N(){
+		return (fourCC == Format.ATI2N.getFourCC());
+	}
 	public void printValues(){
 		printValues(0);
 	}
@@ -154,7 +164,7 @@ public class PixelFormat {
 		for (int i = 0; i < nSpace; i++){
 			sSpace = sSpace + "	";
 		}
-		System.out.println(sSpace+"DDPixelFormat: ");
+		System.out.println(sSpace+"PixelFormat: ");
 		
 		System.out.println(sSpace+"	size: "+size);
 		System.out.print(sSpace+"	flags: "+flags);

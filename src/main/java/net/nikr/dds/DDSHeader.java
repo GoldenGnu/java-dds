@@ -41,14 +41,14 @@ public class DDSHeader {
 	private int pitchOrLinearSize;
 	private int depth;
 	private int mipMapCount;
-	private PixelFormat pixelFormat;
+	private DDSPixelFormat ddsPixelFormat;
 	private int caps;
     private int caps2;
     private int caps3;
     private int caps4;
 	
 	
-	public DDSHeader(int size, int flags, int height, int width, int linearSize, int depth, int mipMapCount, PixelFormat pixelFormat, int caps, int caps2, int caps3, int caps4) {
+	public DDSHeader(int size, int flags, int height, int width, int linearSize, int depth, int mipMapCount, DDSPixelFormat ddsPixelFormat, int caps, int caps2, int caps3, int caps4) {
 		this.size = size;
 		this.flags = flags;
 		this.height = height;
@@ -56,7 +56,7 @@ public class DDSHeader {
 		this.pitchOrLinearSize = linearSize;
 		this.depth = depth;
 		this.mipMapCount = mipMapCount;
-		this.pixelFormat = pixelFormat;
+		this.ddsPixelFormat = ddsPixelFormat;
 		this.caps = caps;
 		this.caps2 = caps2;
 		this.caps3 = caps3;
@@ -101,13 +101,13 @@ public class DDSHeader {
 		System.out.println("	linearSize: "+pitchOrLinearSize);
 		System.out.println("	depth: "+depth);
 		System.out.println("	mipMapCount: "+mipMapCount);
-		pixelFormat.printValues(1);
+		ddsPixelFormat.printValues(1);
 		System.out.println("	caps: "+caps);
 		System.out.println("	caps2: "+caps2);
 		System.out.println("	caps3: "+caps3);
 		System.out.println("	caps4: "+caps4);
 	}
-	public PixelFormat getPixelFormat() {
-		return pixelFormat;
+	public DDSPixelFormat getPixelFormat() {
+		return ddsPixelFormat;
 	}
 }
