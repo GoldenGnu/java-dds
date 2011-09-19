@@ -1,25 +1,26 @@
 /*
- * PixelFormat.java - This file is part of NiKR.NET DDS Reader
+ * PixelFormat.java - This file is part of Java DDS ImageIO Plugin
  *
- * Copyright (C) 2007 Niklas Kyster Rasmussen
+ * Copyright (C) 2011 Niklas Kyster Rasmussen
  *
- * NiKR.NET DDS Reader is free software; you can redistribute it and/or
+ * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * NiKR.NET DDS Reader is distributed in the hope that it will be useful,
+ * Java DDS ImageIO Plugin is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with NiKR.NET DDS Reader; if not, write to the Free Software
+ * along with Java DDS ImageIO Plugin; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
  * [TODO] DESCRIPTION
  */
+
 
 package net.nikr.dds;
 
