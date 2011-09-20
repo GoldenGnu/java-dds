@@ -40,8 +40,8 @@ public class DDSImageReaderSpi extends ImageReaderSpi {
 			"Niklas K. Rasmussen",	// vendorName
 			"0.0.1 ALPHA 1",		// version
 			new String [] { "DDS" },// names
-			new String [] { "dds", "png", "jpg" },// suffixes
-			new String [] { "image/dds", "image/png", "image/jpeg" },// MIMETypes
+			new String [] { "dds" },// suffixes
+			new String [] { "image/dds" },// MIMETypes
 			"net.nikr.dds.DDSImageReader",	// readerClassName
 			STANDARD_INPUT_TYPE,	// inputTypes
 			null,	// writerSpiNames

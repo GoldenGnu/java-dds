@@ -39,7 +39,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>net.nikr.dds.Main.Runtest</mainClass>
+							<mainClass>net.nikr.dds.Viewer</mainClass>
 							<packageName>net.nikr.dds</packageName>
 							<addClasspath>true</addClasspath>
 							<classpathPrefix>lib</classpathPrefix>
