@@ -31,7 +31,7 @@ public class DDSLineReader {
 	private static final int BANK_RED = 0;
 	private static final int BANK_GREEN = 1;
 	private static final int BANK_BLUE = 2;
-	private static final int BANK_ALPHA = 3; //FIXME Won't work yet...
+	private static final int BANK_ALPHA = 3;
 	
 	private static byte[][][] linesColor;
 	private static int lineNumber = 0;
@@ -89,7 +89,7 @@ public class DDSLineReader {
 		}
 	}
 	private void readDXT(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
-		if (lineNumber >= 4 ) lineNumber = 0;
+		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
 			//System.out.println("Read line: "+y);
 			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
@@ -98,9 +98,45 @@ public class DDSLineReader {
 					decodeDXT3AlphaBlock(stream, ddsHeader, x);
 				}
 				if (ddsHeader.getPixelFormat().isDXT5()){
-					decodeDXT5AlphaBlock(stream, ddsHeader, x);
+					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_ALPHA);
 				}
 				decodeColorBlock(stream, ddsHeader, banks, x);
+			}
+		}
+		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
+			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
+			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
+			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
+			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
+		}
+		lineNumber++;
+	}
+	
+	private void readATI(ImageInputStream stream, DDSHeader ddsHeader, byte[][] banks) throws IOException{
+		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
+		if (lineNumber == 0){
+			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
+			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
+				if (ddsHeader.getPixelFormat().isATI1N()){
+					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_RED);
+					for (int yi = 0; yi < 4 ; yi++){
+						for (int xi = 0; xi < 4; xi++){
+							linesColor[yi][x+xi][BANK_GREEN] = (byte) linesColor[yi][x+xi][BANK_RED];
+							linesColor[yi][x+xi][BANK_BLUE] = (byte) linesColor[yi][x+xi][BANK_RED];
+							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255; //FIXME or linesColor[yi][x+xi][BANK_RED]
+						}
+					}
+				}
+				if (ddsHeader.getPixelFormat().isATI2N()){
+					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_GREEN);
+					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_RED);
+					for (int yi = 0; yi < 4 ; yi++){
+						for (int xi = 0; xi < 4; xi++){
+							linesColor[yi][x+xi][BANK_BLUE] = (byte) 0;
+							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255;
+						}
+					}
+				}
 			}
 		}
 		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
@@ -214,136 +250,8 @@ public class DDSLineReader {
 			}
 		}
 	}
-	private void decodeDXT5AlphaBlock(ImageInputStream stream, DDSHeader ddsHeader, int x) throws IOException{
-		//debug:
-		boolean debug = false; //(x == 192 && y == 96);
-		
-		int alpha0, alpha1, bits0, bits1, bits2, bits3, bits4, bits5;
-		int[] alpha = new int[8];
-		int[] bits = new int[6];
-
-		//Read 8 Bytes
-		alpha0 = stream.readByte() & 0xff;
-		alpha1 = stream.readByte() & 0xff;
-		bits0 = stream.readByte() & 0xff;
-		bits1 = stream.readByte() & 0xff;
-		bits2 = stream.readByte() & 0xff;
-		bits3 = stream.readByte() & 0xff;
-		bits4 = stream.readByte() & 0xff;
-		bits5 = stream.readByte() & 0xff;
-
-		//64bit UNSIGNED LONG - broke up into 6 ints
-		bits[0] = bits0 + 256 * (bits1 + 256);
-		bits[1] = bits1 + 256 * (bits2 + 256);
-		bits[2] = bits2 + 256 * (bits3 + 256);
-		bits[3] = bits3 + 256 * (bits4 + 256);
-		bits[4] = bits4 + 256 * (bits5);
-		bits[5] = bits5;
-		
-		//[FIXME] is not calulated... should:  multiplying by 1/255.
-		alpha[0] = alpha0;
-		alpha[1] = alpha1;
-		//alpha[0] = (int) (alpha0 * (1.0/255.0));
-		//alpha[1] = (int) (alpha1 * (1.0/255.0));
-		
-		if (debug){
-			System.out.println(" bits[0]: "+bits[0]+" ("+Long.toBinaryString(bits[0])+")");
-			System.out.println(" bits[1]: "+bits[1]+" ("+Long.toBinaryString(bits[1])+")");
-			System.out.println(" bits[2]: "+bits[2]+" ("+Long.toBinaryString(bits[2])+")");
-			System.out.println(" bits[2]: "+bits[3]+" ("+Long.toBinaryString(bits[3])+")");
-			System.out.println(" bits[2]: "+bits[4]+" ("+Long.toBinaryString(bits[4])+")");
-			System.out.println(" bits[2]: "+bits[5]+" ("+Long.toBinaryString(bits[5])+")");
-		}
-		if (alpha0 > alpha1){
-			if (debug) System.out.println("alpha0 > alpha1");
-			alpha[2] = (6*alpha[0] + 1*alpha[1])/7;
-            alpha[3] = (5*alpha[0] + 2*alpha[1])/7;
-            alpha[4] = (4*alpha[0] + 3*alpha[1])/7;
-            alpha[5] = (3*alpha[0] + 4*alpha[1])/7;
-            alpha[6] = (2*alpha[0] + 5*alpha[1])/7;
-            alpha[7] = (1*alpha[0] + 6*alpha[1])/7;
-		} else {
-			if (debug) System.out.println("alpha0 <= alpha1");
-			alpha[2] = (4*alpha[0] + 1*alpha[1])/5;
-			alpha[3] = (3*alpha[0] + 2*alpha[1])/5;
-			alpha[4] = (2*alpha[0] + 3*alpha[1])/5;
-			alpha[5] = (1*alpha[0] + 4*alpha[1])/5;
-			alpha[6] = 0;
-			alpha[7] = 255;
-		}
-		
-		for (int yi = 0; yi < 4 ; yi++){
-			for (int xi = 0; xi < 4; xi++){
-				//Calculate the bit posistion in the alpha0, alpha1 (long)
-				
-				int i = (3*(4*yi+xi)); //64bit UNSIGNED LONG: bit position
-				
-				int bit = (int) Math.floor(i / 8.0);  //where in the bits array to find the bit position
-				i = i - (bit * 8); //offset from the 64bit position to the bits array
-
-				//Extract 2bits, from the bits array
-				byte code = (byte)((bits[bit] >> i) & 7);
-				
-				//Debug
-				if (debug){
-					System.out.println("yi: "+yi+" xi: "+xi+" byte: "+(i*3)+" code: "+code+" alpha[code]: "+alpha[code]+" ("+Integer.toBinaryString(alpha[code])+")");
-				}
-				//Add the value to the alpha map
-				linesColor[yi][x+xi][BANK_ALPHA] = (byte) alpha[code];
-			}
-		}
-	}
-	private int[] unpackRBG565(int rbg565){
-		int r = (rbg565 >> 11) & 0x1f;
-		int g = (rbg565 >>  5) & 0x3f;
-		int b = (rbg565      ) & 0x1f;
-
-		int[] color = new int[4];
-		color[0] = (char)((r << 3) | (r >> 2));
-		color[1] = (char)((g << 2) | (g >> 4));
-		color[2] = (char)((b << 3) | (b >> 2));
-		color[3] = 255;
-		
-		return color;
-	}
-
-	private void readATI(ImageInputStream stream, DDSHeader ddsHeader, byte[][] banks) throws IOException{
-		if (lineNumber >= 4 ) lineNumber = 0;
-		if (lineNumber == 0){
-			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
-			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
-				if (ddsHeader.getPixelFormat().isATI1N()){
-					decodeATIRedBlock(stream, ddsHeader, x, BANK_RED);
-					for (int yi = 0; yi < 4 ; yi++){
-						for (int xi = 0; xi < 4; xi++){
-							linesColor[yi][x+xi][BANK_GREEN] = (byte) linesColor[yi][x+xi][BANK_RED];
-							linesColor[yi][x+xi][BANK_BLUE] = (byte) linesColor[yi][x+xi][BANK_RED];
-							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255; //FIXME or linesColor[yi][x+xi][BANK_RED]
-						}
-					}
-				}
-				if (ddsHeader.getPixelFormat().isATI2N()){
-					decodeATIRedBlock(stream, ddsHeader, x, BANK_GREEN);
-					decodeATIRedBlock(stream, ddsHeader, x, BANK_RED);
-					for (int yi = 0; yi < 4 ; yi++){
-						for (int xi = 0; xi < 4; xi++){
-							linesColor[yi][x+xi][BANK_BLUE] = (byte) 0;
-							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255;
-						}
-					}
-				}
-			}
-		}
-		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
-			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
-			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
-			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
-			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
-		}
-		lineNumber++;
-	}
 	
-	private void decodeATIRedBlock(ImageInputStream stream, DDSHeader ddsHeader, int x, int bank) throws IOException{
+	private void decodeAtiAndDxt5AlphaBlock(ImageInputStream stream, DDSHeader ddsHeader, int x, int bank) throws IOException{
 		//debug:
 		boolean debug = false; //(x == 192 && y == 96);
 		
@@ -421,5 +329,19 @@ public class DDSLineReader {
 				linesColor[yi][x+xi][bank] = (byte) color[code];
 			}
 		}
+	}
+	
+	private int[] unpackRBG565(int rbg565){
+		int r = (rbg565 >> 11) & 0x1f;
+		int g = (rbg565 >>  5) & 0x3f;
+		int b = (rbg565      ) & 0x1f;
+
+		int[] color = new int[4];
+		color[0] = (char)((r << 3) | (r >> 2));
+		color[1] = (char)((g << 2) | (g >> 4));
+		color[2] = (char)((b << 3) | (b >> 2));
+		color[3] = 255;
+		
+		return color;
 	}
 }

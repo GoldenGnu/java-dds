@@ -363,6 +363,7 @@ public class DDSImageReader extends ImageReader {
 			int caps4 = stream.readInt();
 			ddsHeader = new DDSHeader(size, flags, height, width, linearSize, depth, mipMapCount, ddsPixelFormat, caps, caps2, caps3, caps4);
 			//ddsHeader.printValues();
+			//System.out.println(ddsHeader.getPixelFormat().getFormat().getName());
 		} catch (IOException ex) {
 			throw new IIOException("Failed To Load Header: " + ex.getMessage());
 		}
