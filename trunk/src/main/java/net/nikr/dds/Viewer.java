@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
@@ -44,8 +43,10 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
 
@@ -54,12 +55,14 @@ public class Viewer {
 	//Frame
 	private JFrame jFrame;
 	private JPanel jMainPanel;
-	private BufferedImage[] images;
+	private List<BufferedImage> images;
 	
 	private final JFileChooser jFileChooser = new JFileChooser();
 	
 	public Viewer() {
-		jFileChooser.setFileFilter(new DdsFilter(null));
+		jFileChooser.setAcceptAllFileFilterUsed(false);
+		jFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		jFileChooser.setFileFilter(new DdsFilter(true));
 		
 		jMainPanel = new JPanel();
 		jMainPanel.setLayout( new BoxLayout(jMainPanel, BoxLayout.Y_AXIS) ); 
@@ -129,35 +132,50 @@ public class Viewer {
 	
 	private void open(){
 		List<File> fileList = new ArrayList<File>();
-		int returnVal = jFileChooser.showOpenDialog(null);
+		int returnVal = jFileChooser.showOpenDialog(jFrame);
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = jFileChooser.getSelectedFile();
 			if (file.isDirectory()){
-				fileList = loadDir(file, null);
+				File[] files = file.listFiles(new DdsFilter(false));
+				if (files.length > 0){
+					int value = JOptionPane.showConfirmDialog(jFrame, "Open directory?\n"+files.length+" DDS files", "Open Directory", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (value != JOptionPane.OK_OPTION){
+						return;
+					}
+				} else {
+					JOptionPane.showMessageDialog(jFrame, "No dds files in directory...", "Open Directory", JOptionPane.INFORMATION_MESSAGE);
+					return;
+				}
+				jMainPanel.removeAll();
+				jMainPanel.add( new JLabel("Loading..."));
+				jMainPanel.updateUI();
+				LoadDir loadDir = new LoadDir(file);
+				loadDir.execute();
 			} else {
 				fileList = loadFile(file);
+				build(fileList);
 			}
-			build(fileList);
+			
         }
 	}
 	
 	private void clear(){
+		images = new ArrayList<BufferedImage>();
 		jMainPanel.removeAll();
 		jMainPanel.updateUI();
 	}
 
-	private List<File> loadDir(final File dir, final String startWith){
-		File[] files = dir.listFiles(new DdsFilter(startWith));
+	private List<File> loadDir(final File dir){
+		File[] files = dir.listFiles(new DdsFilter(false));
 		
-		List<File> fileList =  Arrays.asList(files);
+		List<File> fileList = new ArrayList<File>();
 		
-		images = new BufferedImage[files.length];
+		images = new ArrayList<BufferedImage>();
 		
-		int i = 0;
-		for (File file : fileList){
+		for (File file : files){
 			try {
-				images[i] = ImageIO.read(file);
-				i++;
+				images.add(ImageIO.read(file));
+				fileList.add(file);
 			} catch (IOException ex) {
 				System.out.println("Failed to load: "+file.getName());
 			}
@@ -165,14 +183,14 @@ public class Viewer {
 		return fileList;
 	}
 	private List<File> loadFile(final File file){
-		images = new BufferedImage[1];
+		images = new ArrayList<BufferedImage>();
 		List<File> fileList = new ArrayList<File>();
+		try {
+			images.add(ImageIO.read(file));
 			fileList.add(file);
-			try {
-				images[0] = ImageIO.read(file);
-			} catch (IOException ex) {
-				System.out.println("Failed to load: "+file.getName());
-			}
+		} catch (IOException ex) {
+			System.out.println("Failed to load: "+file.getName());
+		}
 		return fileList;
 	}
 	
@@ -182,6 +200,7 @@ public class Viewer {
 		for (BufferedImage image : images){
 			JPanel jPanel = new JPanel();
 			jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
+			jPanel.setAlignmentX(JScrollPane.CENTER_ALIGNMENT);
 			jMainPanel.add(jPanel);
 			
 			JLabel imageLabel = new JLabel();
@@ -208,28 +227,57 @@ public class Viewer {
 	
 	public class DdsFilter extends javax.swing.filechooser.FileFilter implements FileFilter {
 		
-		private String startWith;
+		private boolean acceptDirectories;
 
-		public DdsFilter(String startWith) {
-			this.startWith = startWith;
+		public DdsFilter() {
+			this(true);
+		}
+		
+		public DdsFilter(boolean acceptDirectories) {
+			this.acceptDirectories = acceptDirectories;
 		}
 		
 		@Override
 		public boolean accept(File file) {
-			if (file.isDirectory()) return true;
+			if (file.isDirectory()) return acceptDirectories;
 			int index = file.getName().lastIndexOf(".");
 			if (index < 0) return false;
-			if (startWith != null){
-				return file.getName().toLowerCase().startsWith(startWith.toLowerCase()) && 
-						file.getName().substring(index).equals(".dds");
-			} else {
-				return file.getName().substring(index).equals(".dds");
-			}
+			return file.getName().substring(index).toLowerCase().equals(".dds");
 		}
 
 		@Override
 		public String getDescription() {
 			return "DDS files";
 		}
+	}
+	
+	class LoadDir extends SwingWorker<Void, Void>{
+
+		private File file;
+		private List<File> fileList;
+
+		public LoadDir(File file) {
+			this.file = file;
+		}
+		
+		@Override
+		protected Void doInBackground() throws Exception {
+			fileList = loadDir(file);
+			return null;
+		}
+
+		@Override
+		protected void done() {
+			try {
+				get();
+				build(fileList);
+			} catch (Exception ex) {
+				images = new ArrayList<BufferedImage>();
+				JOptionPane.showMessageDialog(jFrame, "Failed to load images....", "Error", JOptionPane.WARNING_MESSAGE);
+			}
+		}
+		
+		
+		
 	}
 }
