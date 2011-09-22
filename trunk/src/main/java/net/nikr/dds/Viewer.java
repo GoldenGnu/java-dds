@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BoxLayout;
@@ -55,7 +57,7 @@ public class Viewer {
 	//Frame
 	private JFrame jFrame;
 	private JPanel jMainPanel;
-	private List<BufferedImage> images;
+	private List<Item> items;
 	
 	private final JFileChooser jFileChooser = new JFileChooser();
 	
@@ -99,7 +101,6 @@ public class Viewer {
 		jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jFrame.getContentPane().add(scroll);
 		jFrame.setJMenuBar(jMenuBar);
-		//jFrame.pack();
 		jFrame.setVisible(true);
 	}
 	
@@ -152,52 +153,47 @@ public class Viewer {
 				LoadDir loadDir = new LoadDir(file);
 				loadDir.execute();
 			} else {
-				fileList = loadFile(file);
-				build(fileList);
+				loadFile(file);
+				update();
 			}
 			
         }
 	}
 	
 	private void clear(){
-		images = new ArrayList<BufferedImage>();
+		items = new ArrayList<Item>();
 		jMainPanel.removeAll();
 		jMainPanel.updateUI();
 	}
 
-	private List<File> loadDir(final File dir){
-		File[] files = dir.listFiles(new DdsFilter(false));
-		
-		List<File> fileList = new ArrayList<File>();
-		
-		images = new ArrayList<BufferedImage>();
+	private void loadDir(final File dir){
+		List<File> files = Arrays.asList(dir.listFiles(new DdsFilter(false)));
+		Collections.sort(files);
+		items = new ArrayList<Item>();
 		
 		for (File file : files){
 			try {
-				images.add(ImageIO.read(file));
-				fileList.add(file);
+				BufferedImage image = ImageIO.read(file);
+				items.add( new Item(image, file));
 			} catch (IOException ex) {
-				System.out.println("Failed to load: "+file.getName());
+				System.out.println("Failed to load: "+file.getName()+" "+ex.getMessage());
 			}
 		}
-		return fileList;
 	}
-	private List<File> loadFile(final File file){
-		images = new ArrayList<BufferedImage>();
-		List<File> fileList = new ArrayList<File>();
+	private void loadFile(final File file){
+		items = new ArrayList<Item>();
 		try {
-			images.add(ImageIO.read(file));
-			fileList.add(file);
+			BufferedImage image = ImageIO.read(file);
+			items.add( new Item(image, file));
 		} catch (IOException ex) {
-			System.out.println("Failed to load: "+file.getName());
+			System.out.println("Failed to load: "+file.getName()+" "+ex.getMessage());
 		}
-		return fileList;
 	}
 	
-	private void build(List<File> fileList){
+	private void update(){
 		jMainPanel.removeAll();
 		int i = 0;
-		for (BufferedImage image : images){
+		for (Item item : items){
 			JPanel jPanel = new JPanel();
 			jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
 			jPanel.setAlignmentX(JScrollPane.CENTER_ALIGNMENT);
@@ -206,9 +202,9 @@ public class Viewer {
 			JLabel imageLabel = new JLabel();
 			imageLabel.setBackground( Color.magenta);
 			imageLabel.setOpaque(true);
-			imageLabel.setIcon(new ImageIcon(image));
+			imageLabel.setIcon(new ImageIcon(item.getImage()));
 			
-			File file = new File(fileList.get(i).getName());
+			File file = new File(item.getFile().getName());
 			JLabel textLabel = new JLabel(file.getName());
 			textLabel.setHorizontalAlignment(JLabel.CENTER);
 			
@@ -254,7 +250,6 @@ public class Viewer {
 	class LoadDir extends SwingWorker<Void, Void>{
 
 		private File file;
-		private List<File> fileList;
 
 		public LoadDir(File file) {
 			this.file = file;
@@ -262,7 +257,7 @@ public class Viewer {
 		
 		@Override
 		protected Void doInBackground() throws Exception {
-			fileList = loadDir(file);
+			loadDir(file);
 			return null;
 		}
 
@@ -270,14 +265,29 @@ public class Viewer {
 		protected void done() {
 			try {
 				get();
-				build(fileList);
+				update();
 			} catch (Exception ex) {
-				images = new ArrayList<BufferedImage>();
+				items = new ArrayList<Item>();
 				JOptionPane.showMessageDialog(jFrame, "Failed to load images....", "Error", JOptionPane.WARNING_MESSAGE);
 			}
 		}
-		
-		
-		
+	}
+	
+	private static class Item{
+		private BufferedImage image;
+		private File file;
+
+		public Item(BufferedImage image, File file) {
+			this.image = image;
+			this.file = file;
+		}
+
+		public File getFile() {
+			return file;
+		}
+
+		public BufferedImage getImage() {
+			return image;
+		}
 	}
 }

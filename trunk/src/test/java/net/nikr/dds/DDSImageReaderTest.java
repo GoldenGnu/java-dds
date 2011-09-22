@@ -67,6 +67,37 @@ public class DDSImageReaderTest {
 		new TestParams("test_image-bc3.dds", 9, 256, 256),	//DXT5 - OK
 		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI1N - OK?
 		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI2N - OK?
+		
+		new TestParams("gimp\\a8.dds", 9, 256, 256),				//NONE A8 - OK
+		new TestParams("gimp\\abgr8.dds", 9, 256, 256),				//NONE ABGR8 - OK
+		new TestParams("gimp\\aexp.dds", 9, 256, 256),				//??? - OK
+		new TestParams("gimp\\alpha_exponent_dxt5.dds", 9, 256, 256),//bc3/dxt5 (Alpha Exponent)
+		
+		new TestParams("gimp\\bc1.dds", 9, 256, 256),				//bc1/dxt1 - OK
+		new TestParams("gimp\\bc2.dds", 9, 256, 256),				//bc2/dxt3 - OK
+		new TestParams("gimp\\bc3.dds", 9, 256, 256),				//bc3/dxt5 - OK
+		new TestParams("gimp\\bc3n.dds", 9, 256, 256),				//bc3n/dxt5 - OK
+		new TestParams("gimp\\bc4.dds", 9, 256, 256),				//bc4/ati1 - OK
+		new TestParams("gimp\\bc5.dds", 9, 256, 256),				//bc5/ati2 - OK
+		
+		//FIXME can not be writen by GIMP
+		//new TestParams("gimp\\bgr8.dds", 9, 256, 256),				//NONE BGR8
+		
+		new TestParams("gimp\\l8.dds", 9, 256, 256),				//NONE L8 - OK
+		new TestParams("gimp\\l8a8.dds", 9, 256, 256),				//NONE L8A8 - OK
+		
+		new TestParams("gimp\\r3g3b2.dds", 9, 256, 256),			//NONE R3G3B2 - OK
+		new TestParams("gimp\\r5g6b5.dds", 9, 256, 256),			//NONE R5G6B5 - OK
+		new TestParams("gimp\\rgb5a1.dds", 9, 256, 256),			//NONE RGB5A1 - FAIL
+		new TestParams("gimp\\rgb8.dds", 9, 256, 256),				//NONE RGB8 - FAIL
+		new TestParams("gimp\\rgb10a2.dds", 9, 256, 256),			//NONE RGB10A2 - FAIL
+		new TestParams("gimp\\rgba4.dds", 9, 256, 256),				//NONE RGBA4 - OK
+		new TestParams("gimp\\rgba8.dds", 9, 256, 256),				//NONE RGBA8 - OK
+		
+		new TestParams("gimp\\ycocg.dds", 9, 256, 256),				//NONE YCoCg
+		new TestParams("gimp\\ycocg_dxt5.dds", 9, 256, 256),		//DXT5 (YCoCg)
+		new TestParams("gimp\\ycocg_scaled_dxt5.dds", 9, 256, 256),	//DXT5 (YCoCg scaled)
+		
 	};
     
 	
@@ -197,6 +228,7 @@ public class DDSImageReaderTest {
 	public void testRead() throws Exception {
 		System.out.println("read");
 		for (int i = 0; i < params.length; i++){
+			System.out.println(params[i].getName());
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
 				ImageReadParam param = null;
 				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
@@ -213,23 +245,27 @@ public class DDSImageReaderTest {
 	@Test
 	public void testImageIO() throws Exception {
 		System.out.println("ImageIO");
-		try {
+		
 			for (TestParams param : params){
-				ImageIO.read(new File(param.getFilename()));
+				try {
+					System.out.println(param.getName());
+					ImageIO.read(new File(param.getFilename()));
+				} catch (IOException ex) {
+					fail("testImageIO -> Fail for file: "+param.getName()+" -> "+ex.getMessage());
+				}
 			}
-		} catch (IOException ex) {
-			fail("testImageIO fail");
-		}
+		
 	}
 	
 	private Object getInput(int i){
 		Object input = null;
+		File file = new File(params[i].getFilename());
 		try {
-			input = new FileImageInputStream(new File(params[i].getFilename()));
+			input = new FileImageInputStream(file);
 		} catch (FileNotFoundException ex) {
-			fail("File not found.");
+			fail("getInput -> File "+file.getName()+" not found -> "+ex.getMessage());
 		} catch (IOException ex) {
-			fail("IO Failed.");
+			fail("getInput -> IO Failed for "+file.getName()+" -> "+ex.getMessage());
 		}
 		return input;
 	}
@@ -274,6 +310,10 @@ public class DDSImageReaderTest {
 			this.height = height;
 		}
 
+		public String getName(){
+			return filename;
+		}
+		
 		public String getFilename() {
 			return dir+filename;
 		}

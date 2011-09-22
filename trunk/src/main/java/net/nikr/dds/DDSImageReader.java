@@ -77,21 +77,21 @@ public class DDSImageReader extends ImageReader {
 	@Override
 	public int getNumImages(boolean allowSearch) throws IIOException {
 		readHeader();
-		return ddsHeader.getMipMapCount();
+		return (int)ddsHeader.getMipMapCount();
 	}
 
 	@Override
 	public int getWidth(int imageIndex) throws IIOException {
 		readHeader();
 		checkIndex(imageIndex);
-		return ddsHeader.getWidth() / (imageIndex + 1);
+		return (int)ddsHeader.getWidth() / (imageIndex + 1);
 	}
 
 	@Override
 	public int getHeight(int imageIndex) throws IIOException {
 		readHeader();
 		checkIndex(imageIndex);
-		return ddsHeader.getHeight() / (imageIndex + 1);
+		return (int)ddsHeader.getHeight() / (imageIndex + 1);
 	}
 
 	@Override
@@ -101,21 +101,8 @@ public class DDSImageReader extends ImageReader {
 		ImageTypeSpecifier imageType = null;
 		java.util.List<ImageTypeSpecifier> l = new ArrayList<ImageTypeSpecifier>();
 
+		imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
 
-		switch (ddsHeader.getPixelFormat().getFormat()) {
-			case ATI1N:
-			case ATI2N:
-			case DXT1:
-			case DXT3:
-			case DXT5:
-			case A8R8G8B8:
-				imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
-				break;
-			case DXT2:
-			case DXT4:
-			default:
-				throw new IIOException("Format not supported");
-		}
 		l.add(imageType);
 		return l.iterator();
 	}
@@ -157,7 +144,7 @@ public class DDSImageReader extends ImageReader {
 		//	 2.3 param.getSubsamplingYOffset() is added to the region's y
 		//		  coordinate and subtracted from its height.
 
-		Rectangle sourceRegion = getSourceRegion(param, ddsHeader.getWidth(), ddsHeader.getHeight());
+		Rectangle sourceRegion = getSourceRegion(param, (int)ddsHeader.getWidth(), (int)ddsHeader.getHeight());
 
 		// Source subsampling is used to return a scaled-down source image.
 		// Default 1 values for X and Y subsampling indicate that a non-scaled
@@ -213,7 +200,7 @@ public class DDSImageReader extends ImageReader {
 		//	 2.1 Return getImageTypes (0)'s BufferedImage.
 
 		BufferedImage dst =
-				getDestination(param, getImageTypes(0), ddsHeader.getWidth(), ddsHeader.getHeight());
+				getDestination(param, getImageTypes(0), (int)ddsHeader.getWidth(), (int)ddsHeader.getHeight());
 
 		//dst.
 		// Verify that the number of source bands and destination bands, as
@@ -227,7 +214,7 @@ public class DDSImageReader extends ImageReader {
 		// Create a WritableRaster for the source.
 
 		WritableRaster wrSrc =
-				Raster.createBandedRaster(DataBuffer.TYPE_BYTE, ddsHeader.getWidth(), 1, bandsCount, new Point(0, 0));
+				Raster.createBandedRaster(DataBuffer.TYPE_BYTE, (int)ddsHeader.getWidth(), 1, bandsCount, new Point(0, 0));
 
 		byte[][] banks;
 		banks = ((DataBufferByte) wrSrc.getDataBuffer()).getBankData();
@@ -248,7 +235,7 @@ public class DDSImageReader extends ImageReader {
 
 		if (sourceBands != null) {
 			wrSrc =
-					wrSrc.createWritableChild(0, 0, ddsHeader.getWidth(), 1, 0, 0, sourceBands);
+					wrSrc.createWritableChild(0, 0, (int)ddsHeader.getWidth(), 1, 0, 0, sourceBands);
 		}
 
 		// Create a child raster that exposes only the desired destination
@@ -338,32 +325,28 @@ public class DDSImageReader extends ImageReader {
 			stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
 
 			int magic = stream.readInt();
-			//System.out.println("magic: "+magic);
 			if (magic != MAGIC) {
-				throw new IIOException("Failed To Load Header: MAGIC is not MAGIC");
+				throw new IIOException("Failed To Load Header: magic ("+magic+") is not MAGIC("+MAGIC+")");
 			}
 			int size = stream.readInt();
-			//System.out.println("size: "+size);
 			if (size != 124) {
-				throw new IIOException("Failed To Load Header: Size value is not right");
+				throw new IIOException("Failed To Load Header: size ("+size+") value is not 124");
 			}
-			int flags = stream.readInt();
-			int height = stream.readInt();
-			int width = stream.readInt();
-			int linearSize = stream.readInt();
-			int depth = stream.readInt();
-			int mipMapCount = stream.readInt();
+			long flags = stream.readInt() & 0xFFFFFFFFL;
+			long height = stream.readInt() & 0xFFFFFFFFL;
+			long width = stream.readInt() & 0xFFFFFFFFL;
+			long linearSize = stream.readInt() & 0xFFFFFFFFL;
+			long depth = stream.readInt() & 0xFFFFFFFFL;
+			long mipMapCount = stream.readInt() & 0xFFFFFFFFL;
 
 			stream.skipBytes(11 * 4);
 
 			DDSPixelFormat ddsPixelFormat = readPixelFormat();
-			int caps = stream.readInt();
-			int caps2 = stream.readInt();
-			int caps3 = stream.readInt();
-			int caps4 = stream.readInt();
+			long caps = stream.readInt() & 0xFFFFFFFFL;
+			long caps2 = stream.readInt() & 0xFFFFFFFFL;
+			long caps3 = stream.readInt() & 0xFFFFFFFFL;
+			long caps4 = stream.readInt() & 0xFFFFFFFFL;
 			ddsHeader = new DDSHeader(size, flags, height, width, linearSize, depth, mipMapCount, ddsPixelFormat, caps, caps2, caps3, caps4);
-			//ddsHeader.printValues();
-			//System.out.println(ddsHeader.getPixelFormat().getFormat().getName());
 		} catch (IOException ex) {
 			throw new IIOException("Failed To Load Header: " + ex.getMessage());
 		}
@@ -374,14 +357,14 @@ public class DDSImageReader extends ImageReader {
 		if (size != 32) {
 			throw new IOException("Failed load PixelFormat: File ill formed");  //should throw something...
 		}
-		int flags = stream.readInt();
-		int fourCC = stream.readInt();
-		int rgbBitCount = stream.readInt();
-		int rBitMask = stream.readInt();
-		int gBitMask = stream.readInt();
-		int bBitMask = stream.readInt();
-		int rgbAlphaBitMask = stream.readInt();
-		DDSPixelFormat ddsPixelFormat = new DDSPixelFormat(size, flags, fourCC, rgbBitCount, rBitMask, gBitMask, bBitMask, rgbAlphaBitMask);
+		long flags = stream.readInt() & 0xFFFFFFFFL;
+		long fourCC = stream.readInt() & 0xFFFFFFFFL;
+		long rgbBitCount = stream.readInt() & 0xFFFFFFFFL;
+		long rBitMask = stream.readInt() & 0xFFFFFFFFL;
+		long gBitMask = stream.readInt() & 0xFFFFFFFFL;
+		long bBitMask = stream.readInt() & 0xFFFFFFFFL;
+		long aBitMask = stream.readInt() & 0xFFFFFFFFL;
+		DDSPixelFormat ddsPixelFormat = new DDSPixelFormat(size, flags, fourCC, rgbBitCount, rBitMask, gBitMask, bBitMask, aBitMask);
 		stream.readInt();
 		return ddsPixelFormat;
 	}
