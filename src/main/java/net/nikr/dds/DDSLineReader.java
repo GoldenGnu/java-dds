@@ -44,55 +44,102 @@ public class DDSLineReader {
 	
 	public void readLine(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
 		switch (ddsHeader.getPixelFormat().getFormat()){
-			case A8R8G8B8:
-				readA8R8G8B8(stream, ddsHeader, banks);
+			case UNCOMPRESSED:
+				readUncompressed(stream, ddsHeader, banks);
 				break;
-			case R8G8B8:
-				throw new IOException("R8G8B8 not supported!");
-			case X8R8G8B8:
-				throw new IOException("X8R8G8B8 not supported!");
-			case DXT2:
-				throw new IOException("DXT2 is not supported!");
-			case DXT4:
-				throw new IOException("DXT4 not supported!");
 			case DXT1:
 			case DXT3:
 			case DXT5:
 				readDXT(stream, ddsHeader, banks);
 				break;
-			case ATI1N:
-			case ATI2N:
+			case ATI1:
+			case ATI2:
 				readATI(stream, ddsHeader, banks);
 				break;
 			default:
-				throw new IOException("Not a supported format!");
+				throw new IOException(ddsHeader.getPixelFormat().getFormat().getName()+" is not a supported format!");
 		}
 	}
 	
-	private void readA8R8G8B8(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
+	public void out(long bitmask){
+		System.out.println(Long.toBinaryString(bitmask));
+		System.out.println(Long.toHexString(bitmask));
+		System.out.println(bitmask);
+	}
+	
+	private void readUncompressed(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
 		for (int x = 0; x < ddsHeader.getWidth(); x++) {
-			int arbg = stream.readInt();
-			int a = (arbg >> 24) & 0xff;
-			int r = (arbg >> 16) & 0xff;
-			int g = (arbg >> 8) & 0xff;
-			int b = (arbg) & 0xff;
-			//System.out.println("("+a+", "+r+", "+g+", "+b+")");
 
-			//Red
-			banks[0][x] = (byte) r;
-			//Green
-			banks[1][x] = (byte) g;
-			//Blue
-			banks[2][x] = (byte) b;
-			//Alpha?
-			banks[3][x] = (byte) a;
+			long pixel = 0;
+			switch ((int)ddsHeader.getPixelFormat().getRgbBitCount()){
+				case 8:
+					pixel = stream.readByte();
+					break;
+				case 16:
+					pixel = stream.readShort();
+					break;
+				case 24:
+					stream.mark();
+					pixel = stream.readInt();
+					stream.reset();
+					stream.skipBytes(3);
+					break;
+				case 32:
+					pixel = stream.readInt();
+					break;
+				case 64:
+					pixel = stream.readLong();
+					break;
+			}
+			DDSPixelFormat pf = ddsHeader.getPixelFormat();
+			long amask = pf.getAlphaBitMask() >> pf.getAlphaShift() << (8 - pf.getAlphaBits());
+			long rmask = pf.getRedBitMask() >> pf.getRedShift() << (8 - pf.getRedBits());
+			long gmask = pf.getGreenBitMask() >> pf.getGreenShift() << (8 - pf.getGreenBits());
+			long bmask = pf.getBlueBitMask() >> pf.getBlueShift() << (8 - pf.getBlueBits());
+			
+			long a = 255;
+			long r = 255;
+			long g = 255;
+			long b = 255;
+
+			if ((pf.getRgbBitCount() == 32)
+					&& (pf.getRedBitMask() == 0x3ff00000l)
+					&& (pf.getGreenBitMask() == 0xffc00l)
+					&& (pf.getBlueBitMask() == 0x3ffl) && (pf.getAlphaBitMask() == 0xc0000000l)){
+				//RGB10A2
+				r = (pixel >> pf.getRedShift()) >> 2;
+				g = (pixel >> pf.getGreenShift()) >> 2;
+				b = (pixel >> pf.getBlueShift()) >> 2;
+				if(pf.isAlphaPixels()){
+					a = (pixel >> pf.getAlphaShift() << (8 - pf.getAlphaBits()) & amask) * 255 / amask;
+				}
+			} else {
+				if (amask != 0){
+					a = (pixel >> pf.getAlphaShift() << (8 - pf.getAlphaBits()) & amask) * 255 / amask;
+				}
+				if (rmask != 0){
+					r = (pixel >> pf.getRedShift() << (8 - pf.getRedBits()) & rmask) * 255 / rmask;
+				}
+				if (gmask != 0){
+					g = (pixel >> pf.getGreenShift() << (8 - pf.getGreenBits()) & gmask) * 255 / gmask;
+				}
+				if (bmask != 0){
+					b = (pixel >> pf.getBlueShift() << (8 - pf.getBlueBits()) & bmask) * 255 / bmask;
+				}
+			}
+			
+			banks[BANK_RED][x] = (byte) r;
+			banks[BANK_GREEN][x] = (byte) g;
+			banks[BANK_BLUE][x] = (byte) b;
+			banks[BANK_ALPHA][x] = (byte) a;
 		}
 	}
+	
 	private void readDXT(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
 		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
 			//System.out.println("Read line: "+y);
-			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
+			linesColor = new byte[LINES_PER_READ][(int)ddsHeader.getWidth()][COLORS_PER_READ];
 			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
 				if (ddsHeader.getPixelFormat().isDXT3()){
 					decodeDXT3AlphaBlock(stream, ddsHeader, x);
@@ -115,7 +162,7 @@ public class DDSLineReader {
 	private void readATI(ImageInputStream stream, DDSHeader ddsHeader, byte[][] banks) throws IOException{
 		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
-			linesColor = new byte[LINES_PER_READ][ddsHeader.getWidth()][COLORS_PER_READ];
+			linesColor = new byte[LINES_PER_READ][(int)ddsHeader.getWidth()][COLORS_PER_READ];
 			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
 				if (ddsHeader.getPixelFormat().isATI1N()){
 					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_RED);
@@ -123,7 +170,7 @@ public class DDSLineReader {
 						for (int xi = 0; xi < 4; xi++){
 							linesColor[yi][x+xi][BANK_GREEN] = (byte) linesColor[yi][x+xi][BANK_RED];
 							linesColor[yi][x+xi][BANK_BLUE] = (byte) linesColor[yi][x+xi][BANK_RED];
-							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255; //FIXME or linesColor[yi][x+xi][BANK_RED]
+							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255;
 						}
 					}
 				}
