@@ -2,6 +2,11 @@
  * Viewer.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
+ * 
+ * COPYRIGHT NOTICE:
+ * Java DDS ImageIO Plugin is based on code from the DDS GIMP plugin.
+ * Copyright (C) 2004-2010 Shawn Kirst <skirst@insightbb.com>,
+ * Copyright (C) 2003 Arne Reuter <homepage@arnereuter.de>
  *
  * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,25 +23,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * [TODO] DESCRIPTION
+ * TODO Write File Description for Viewer.java
  */
 
 package net.nikr.dds;
 
 import java.awt.Color;
-import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.FileImageInputStream;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -45,62 +56,129 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
-import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 
 
-public class Viewer {
+public class Viewer implements KeyListener, ActionListener{
+	
+	private static final String ACTION_OPEN = "ACTION_OPEN";
+	private static final String ACTION_RBG = "ACTION_RBG";
+	private static final String ACTION_YCOCG = "ACTION_YCOCG";
+	private static final String ACTION_YCOCG_SCALED = "ACTION_YCOCG_SCALED";
+	private static final String ACTION_ALPHA_EXPONENT = "ACTION_ALPHA_EXPONENT";
+	
+	private enum ColorType{
+		RBG,
+		YCOCG,
+		YCOCG_SCALED,
+		ALPHA_EXPONENT
+	}
 	
 	//Frame
 	private JFrame jFrame;
-	private JPanel jMainPanel;
-	private List<Item> items;
+	private JLabel jImageLabel;
+	private JLabel jTextLabel;
+	
+	private List<File> files;
+	private Item item;
+	private ColorType type;
+	private int fileIndex;
+	private int mipMap;
+	private boolean updating = false;
 	
 	private final JFileChooser jFileChooser = new JFileChooser();
 	
 	public Viewer() {
 		jFileChooser.setAcceptAllFileFilterUsed(false);
-		jFileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+		jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		jFileChooser.setFileFilter(new DdsFilter(true));
 		
-		jMainPanel = new JPanel();
-		jMainPanel.setLayout( new BoxLayout(jMainPanel, BoxLayout.Y_AXIS) ); 
+		JPanel jPanel = new JPanel();
+		GroupLayout groupLayout = new GroupLayout(jPanel);
+		jPanel.setLayout(groupLayout);
 		
-		JScrollPane scroll = new JScrollPane(jMainPanel);
+		JScrollPane scroll = new JScrollPane(jPanel);
 		scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+		JPanel jImagePanel = new JPanel();
+		jImagePanel.setLayout(new BoxLayout(jImagePanel, BoxLayout.Y_AXIS));
+		
+		groupLayout.setHorizontalGroup(
+			groupLayout.createSequentialGroup()
+				.addGap(10, 10, Integer.MAX_VALUE)
+				.addComponent(jImagePanel)
+				.addGap(10, 10, Integer.MAX_VALUE)
+		);
+		groupLayout.setVerticalGroup(
+			groupLayout.createSequentialGroup()
+				.addGap(10, 10, Integer.MAX_VALUE)
+				.addComponent(jImagePanel)
+				.addGap(10, 10, Integer.MAX_VALUE)
+		);
+
+		jImageLabel = new JLabel();
+		jImageLabel.setHorizontalAlignment(JLabel.CENTER);
+		jImageLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		jImageLabel.setBackground( Color.magenta);
+		jImageLabel.setOpaque(true);
+
+		jTextLabel = new JLabel("Nothing loaded...");
+		jTextLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+		jTextLabel.setHorizontalAlignment(JLabel.CENTER);
+
+		jImagePanel.add(jImageLabel);
+		jImagePanel.add(jTextLabel);
+		
 		
 		JMenuBar jMenuBar = new JMenuBar();
 		JMenu jMenu = new JMenu("File");
 		jMenuBar.add(jMenu);
 		JMenuItem jMenuItem = new JMenuItem("Open");
-		jMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				open();
-			}
-		});
+		jMenuItem.setActionCommand(ACTION_OPEN);
+		jMenuItem.addActionListener(this);
 		jMenu.add(jMenuItem);
 		
-		jMenuItem = new JMenuItem("Clear");
-		jMenuItem.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				clear();
-			}
-		});
-		jMenu.add(jMenuItem);
+				
+		jMenu = new JMenu("Colors");
+		jMenuBar.add(jMenu);
+		
+		ButtonGroup group = new ButtonGroup();
+		
+		JRadioButtonMenuItem rbMenuItem = new JRadioButtonMenuItem("RBG");
+		rbMenuItem.setSelected(true);
+		rbMenuItem.setActionCommand(ACTION_RBG);
+		rbMenuItem.addActionListener(this);
+		jMenu.add(rbMenuItem);
+		group.add(rbMenuItem);
+		
+		rbMenuItem = new JRadioButtonMenuItem("YCoCg");
+		rbMenuItem.setActionCommand(ACTION_YCOCG);
+		rbMenuItem.addActionListener(this);
+		jMenu.add(rbMenuItem);
+		group.add(rbMenuItem);
+		
+		rbMenuItem = new JRadioButtonMenuItem("YCoCg Scaled");
+		rbMenuItem.setActionCommand(ACTION_YCOCG_SCALED);
+		rbMenuItem.addActionListener(this);
+		jMenu.add(rbMenuItem);
+		group.add(rbMenuItem);
+		
+		rbMenuItem = new JRadioButtonMenuItem("Alpha Exponent");
+		rbMenuItem.setActionCommand(ACTION_ALPHA_EXPONENT);
+		rbMenuItem.addActionListener(this);
+		jMenu.add(rbMenuItem);
+		group.add(rbMenuItem);
 		
 		jFrame = new JFrame("DDS Viewer");
 		jFrame.setSize(850, 600);
 		jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jFrame.getContentPane().add(scroll);
 		jFrame.setJMenuBar(jMenuBar);
+		jFrame.addKeyListener(this);
 		jFrame.setVisible(true);
 	}
 	
@@ -131,95 +209,160 @@ public class Viewer {
 		}
 	}
 	
-	private void open(){
-		List<File> fileList = new ArrayList<File>();
-		int returnVal = jFileChooser.showOpenDialog(jFrame);
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = jFileChooser.getSelectedFile();
-			if (file.isDirectory()){
-				File[] files = file.listFiles(new DdsFilter(false));
-				if (files.length > 0){
-					int value = JOptionPane.showConfirmDialog(jFrame, "Open directory?\n"+files.length+" DDS files", "Open Directory", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-					if (value != JOptionPane.OK_OPTION){
-						return;
-					}
-				} else {
-					JOptionPane.showMessageDialog(jFrame, "No dds files in directory...", "Open Directory", JOptionPane.INFORMATION_MESSAGE);
-					return;
-				}
-				jMainPanel.removeAll();
-				jMainPanel.add( new JLabel("Loading..."));
-				jMainPanel.updateUI();
-				LoadDir loadDir = new LoadDir(file);
-				loadDir.execute();
-			} else {
-				loadFile(file);
+	private void openFile(final File file){
+		files = Arrays.asList(file.getParentFile().listFiles(new DdsFilter(false)));
+		Collections.sort(files);
+		fileIndex = files.indexOf(file);
+		loadFile(file);
+	}
+	
+	public void loadFile(){
+		loadFile(files.get(fileIndex), mipMap);
+	}
+	
+	public void loadFile(File file){
+		loadFile(file, 0);
+	}
+	
+	public void loadFile(File file, int imageIndex){
+        Iterator<ImageReader> iterator = ImageIO.getImageReadersBySuffix("dds");
+        if (iterator.hasNext()){
+			try {
+				ImageReader imageReader = iterator.next();
+				imageReader.setInput(new FileImageInputStream(file));
+				int max = imageReader.getNumImages(true);
+				if (imageIndex > max || imageIndex < 0) throw new IOException("imageIndex ("+imageIndex+") not found");
+				BufferedImage image = imageReader.read(imageIndex);
+				if (type == ColorType.YCOCG) DDSUtil.decodeYCoCg(image);
+				if (type == ColorType.YCOCG_SCALED) DDSUtil.decodeYCoCgScaled(image);
+				if (type == ColorType.ALPHA_EXPONENT) DDSUtil.decodeAlphaExponent(image);
+				item = new Item(image, file);
 				update();
+			} catch (Exception ex) {
+				System.out.println("loadFile fail...");
+				ex.printStackTrace();
 			}
-			
         }
 	}
 	
-	private void clear(){
-		items = new ArrayList<Item>();
-		jMainPanel.removeAll();
-		jMainPanel.updateUI();
-	}
-
-	private void loadDir(final File dir){
-		List<File> files = Arrays.asList(dir.listFiles(new DdsFilter(false)));
-		Collections.sort(files);
-		items = new ArrayList<Item>();
-		
-		for (File file : files){
+	public int getMipMaps(File file){
+        Iterator<ImageReader> iterator = ImageIO.getImageReadersBySuffix("dds");
+        if (iterator.hasNext()){
 			try {
-				BufferedImage image = ImageIO.read(file);
-				items.add( new Item(image, file));
-			} catch (IOException ex) {
-				System.out.println("Failed to load: "+file.getName()+" "+ex.getMessage());
+				ImageReader imageReader = iterator.next();
+				imageReader.setInput(new FileImageInputStream(file));
+				return imageReader.getNumImages(true);
+			} catch (Exception ex) {
+				System.out.println("getMipMaps fail...");
 			}
-		}
-	}
-	private void loadFile(final File file){
-		items = new ArrayList<Item>();
-		try {
-			BufferedImage image = ImageIO.read(file);
-			items.add( new Item(image, file));
-		} catch (IOException ex) {
-			System.out.println("Failed to load: "+file.getName()+" "+ex.getMessage());
-		}
+        }
+		return 1;
 	}
 	
 	private void update(){
-		jMainPanel.removeAll();
-		int i = 0;
-		for (Item item : items){
-			JPanel jPanel = new JPanel();
-			jPanel.setLayout(new BoxLayout(jPanel, BoxLayout.Y_AXIS));
-			jPanel.setAlignmentX(JScrollPane.CENTER_ALIGNMENT);
-			jMainPanel.add(jPanel);
-			
-			JLabel imageLabel = new JLabel();
-			imageLabel.setBackground( Color.magenta);
-			imageLabel.setOpaque(true);
-			imageLabel.setIcon(new ImageIcon(item.getImage()));
-			
-			File file = new File(item.getFile().getName());
-			JLabel textLabel = new JLabel(file.getName());
-			textLabel.setHorizontalAlignment(JLabel.CENTER);
-			
-			Dimension dimension = new Dimension(Math.max(textLabel.getPreferredSize().width, imageLabel.getPreferredSize().width), textLabel.getPreferredSize().height);
-			textLabel.setMaximumSize(dimension);
-			textLabel.setPreferredSize(dimension);
-			textLabel.setMinimumSize(dimension);
-			
-			jPanel.add(imageLabel);
-			jPanel.add(textLabel);
-
-			i++;
-		}
-		jMainPanel.updateUI();
+		jImageLabel.setIcon(new ImageIcon(item.getImage()));
+		jTextLabel.setText(item.getFile().getName());
+		
+		/*
+		jTextLabel.setPreferredSize(null);
+		Dimension dimension = new Dimension(Math.max(jTextLabel.getPreferredSize().width, jImageLabel.getPreferredSize().width), jTextLabel.getPreferredSize().height);
+		jTextLabel.setMaximumSize(dimension);
+		jTextLabel.setPreferredSize(dimension);
+		jTextLabel.setMinimumSize(dimension);
+		 * 
+		 */
 	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (ACTION_OPEN.equals(e.getActionCommand())){
+			int returnVal = jFileChooser.showOpenDialog(jFrame);
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				File file = jFileChooser.getSelectedFile();
+				openFile(file);
+			}
+		}
+		if (ACTION_RBG.equals(e.getActionCommand())){
+			type = ColorType.RBG;
+			loadFile();
+		}
+		if (ACTION_YCOCG.equals(e.getActionCommand())){
+			type = ColorType.YCOCG;
+			loadFile();
+		}
+		if (ACTION_YCOCG_SCALED.equals(e.getActionCommand())){
+			type = ColorType.YCOCG_SCALED;
+			loadFile();
+		}
+		if (ACTION_ALPHA_EXPONENT.equals(e.getActionCommand())){
+			type = ColorType.ALPHA_EXPONENT;
+			loadFile();
+		}
+	}
+	
+	@Override
+	public void keyTyped(KeyEvent e) {}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		switch (e.getKeyCode()){
+			case KeyEvent.VK_RIGHT:
+				if (!updating){
+					updating = true;
+					fileIndex++;
+					if (fileIndex >= files.size()) fileIndex = 0;
+					mipMap = 0;
+					loadFile();
+					updating = false;
+				} else {
+					Toolkit.getDefaultToolkit().beep();
+				}
+				break;
+			case KeyEvent.VK_LEFT:
+				if (!updating){
+					updating = true;
+					fileIndex--;
+					if (fileIndex < 0) fileIndex = files.size()-1;
+					mipMap = 0;
+					loadFile();
+					updating = false;
+				} else {
+					Toolkit.getDefaultToolkit().beep();
+				}
+				break;
+			case KeyEvent.VK_UP:
+				if (!updating){
+					updating = true;
+					mipMap--;
+					if (mipMap >= 0 && mipMap < getMipMaps(files.get(fileIndex))){
+						loadFile();
+					} else {
+						mipMap++;
+					}
+					updating = false;
+				} else {
+					Toolkit.getDefaultToolkit().beep();
+				}
+				break;
+			case KeyEvent.VK_DOWN:
+				if (!updating){
+					updating = true;
+					mipMap++;
+					if (mipMap >= 0 && mipMap < getMipMaps(files.get(fileIndex))){
+						loadFile();
+					} else {
+						mipMap--;
+					}
+					updating = false;
+				} else {
+					Toolkit.getDefaultToolkit().beep();
+				}
+				break;
+		}
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {}
 	
 	public class DdsFilter extends javax.swing.filechooser.FileFilter implements FileFilter {
 		
@@ -244,32 +387,6 @@ public class Viewer {
 		@Override
 		public String getDescription() {
 			return "DDS files";
-		}
-	}
-	
-	class LoadDir extends SwingWorker<Void, Void>{
-
-		private File file;
-
-		public LoadDir(File file) {
-			this.file = file;
-		}
-		
-		@Override
-		protected Void doInBackground() throws Exception {
-			loadDir(file);
-			return null;
-		}
-
-		@Override
-		protected void done() {
-			try {
-				get();
-				update();
-			} catch (Exception ex) {
-				items = new ArrayList<Item>();
-				JOptionPane.showMessageDialog(jFrame, "Failed to load images....", "Error", JOptionPane.WARNING_MESSAGE);
-			}
 		}
 	}
 	

@@ -1,7 +1,12 @@
 /*
  * DDSHeader.java - This file is part of Java DDS ImageIO Plugin
  *
- * Copyright (C) 2011 Niklas Kyster Rasmussen
+ * Copyright (C) 2011 Niklas Kyster Rasmussen <niklaskr@gmail.com>
+ * 
+ * COPYRIGHT NOTICE:
+ * Java DDS ImageIO Plugin is based on code from the DDS GIMP plugin.
+ * Copyright (C) 2004-2010 Shawn Kirst <skirst@insightbb.com>,
+ * Copyright (C) 2003 Arne Reuter <homepage@arnereuter.de>
  *
  * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * [TODO] DESCRIPTION
+ * TODO Write File Description for DDSHeader.java
  */
 
 package net.nikr.dds;
@@ -81,11 +86,19 @@ public class DDSHeader {
 	public long getFlags() {
 		return flags;
 	}
-	public long getHeight() {
-		return height;
+	public long getHeight(int mipMap) {
+		long nHeight = height;
+		for (int i = 0; i < mipMap; i++){
+			nHeight = nHeight / 2;
+		}
+		return nHeight;
 	}
-	public long getWidth() {
-		return width;
+	public long getWidth(int mipMap) {
+		long nWidth = width;
+		for (int i = 0; i < mipMap; i++){
+			nWidth = nWidth / 2;
+		}
+		return nWidth;
 	}
 	public long getPitchOrLinearSize() {
 		return pitchOrLinearSize;

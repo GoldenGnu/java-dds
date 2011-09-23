@@ -2,6 +2,11 @@
  * DDSImageReader.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
+ * 
+ * COPYRIGHT NOTICE:
+ * Java DDS ImageIO Plugin is based on code from the DDS GIMP plugin.
+ * Copyright (C) 2004-2010 Shawn Kirst <skirst@insightbb.com>,
+ * Copyright (C) 2003 Arne Reuter <homepage@arnereuter.de>
  *
  * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * [TODO] DESCRIPTION
+ * TODO Write File Description for DDSImageReader.java
  */
 package net.nikr.dds;
 
@@ -44,9 +49,7 @@ import javax.imageio.stream.ImageInputStream;
 public class DDSImageReader extends ImageReader {
 
 	private static final int MAGIC = 0x20534444;
-	//[FIXME] need to be set releative to if there is alpha or not
-	//4 with alpha, 3 without alpha
-	private static final int bandsCount = 4;
+	private static final int BANDS_COUNT = 4;
 	private DDSHeader ddsHeader = null;
 	private ImageInputStream stream;
 
@@ -84,14 +87,14 @@ public class DDSImageReader extends ImageReader {
 	public int getWidth(int imageIndex) throws IIOException {
 		readHeader();
 		checkIndex(imageIndex);
-		return (int)ddsHeader.getWidth() / (imageIndex + 1);
+		return (int)ddsHeader.getWidth(imageIndex);
 	}
 
 	@Override
 	public int getHeight(int imageIndex) throws IIOException {
 		readHeader();
 		checkIndex(imageIndex);
-		return (int)ddsHeader.getHeight() / (imageIndex + 1);
+		return (int)ddsHeader.getHeight(imageIndex);
 	}
 
 	@Override
@@ -122,9 +125,29 @@ public class DDSImageReader extends ImageReader {
 		readHeader();
 		checkIndex(imageIndex);
 		DDSLineReader ddsLineReader = new DDSLineReader();
-
 		stream.reset();
 		stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+		
+		//Skips bytes to the selected imageIndex (MipMap)
+		long skipsBytes = 0;
+		for (int i = 0; i < imageIndex; i++){
+			if (ddsHeader.getPixelFormat().isCompressed()){
+				if (ddsHeader.getPixelFormat().isDXT1() || ddsHeader.getPixelFormat().isATI1()){ //DXT1 & ATI (8 bytes)
+					long bytes = (8 * (Math.max(1, (ddsHeader.getHeight(i)/ 4) * Math.max(1, ddsHeader.getWidth(i)/ 4))));
+					bytes = Math.max(bytes, 8);
+					skipsBytes = skipsBytes + bytes;
+				} else { //DXT3 & DXT5 & ATI2 (16 bytes)
+					long bytes = (16 * (Math.max(1, (ddsHeader.getHeight(i)/ 4) * Math.max(1, ddsHeader.getWidth(i)/ 4))));
+					bytes = Math.max(bytes, 16);
+					skipsBytes = skipsBytes + bytes;
+				}
+			} else { //Uncompressed
+				long bytes =  (ddsHeader.getPixelFormat().getRgbBitCount() / 8) * ddsHeader.getHeight(i) * ddsHeader.getWidth(i);
+				skipsBytes = skipsBytes + bytes;
+			}
+		}
+		if (skipsBytes > 0) stream.skipBytes(skipsBytes);
+		
 		// Calculate and return a Rectangle that identifies the region of the
 		// source image that should be read:
 		//
@@ -144,7 +167,7 @@ public class DDSImageReader extends ImageReader {
 		//	 2.3 param.getSubsamplingYOffset() is added to the region's y
 		//		  coordinate and subtracted from its height.
 
-		Rectangle sourceRegion = getSourceRegion(param, (int)ddsHeader.getWidth(), (int)ddsHeader.getHeight());
+		Rectangle sourceRegion = getSourceRegion(param, (int)ddsHeader.getWidth(imageIndex), (int)ddsHeader.getHeight(imageIndex));
 
 		// Source subsampling is used to return a scaled-down source image.
 		// Default 1 values for X and Y subsampling indicate that a non-scaled
@@ -200,7 +223,7 @@ public class DDSImageReader extends ImageReader {
 		//	 2.1 Return getImageTypes (0)'s BufferedImage.
 
 		BufferedImage dst =
-				getDestination(param, getImageTypes(0), (int)ddsHeader.getWidth(), (int)ddsHeader.getHeight());
+				getDestination(param, getImageTypes(0), (int)ddsHeader.getWidth(imageIndex), (int)ddsHeader.getHeight(imageIndex));
 
 		//dst.
 		// Verify that the number of source bands and destination bands, as
@@ -209,12 +232,12 @@ public class DDSImageReader extends ImageReader {
 		// An IllegalArgumentException is thrown if the number of source bands
 		// differs from the number of destination bands.
 
-		checkReadParamBandSettings(param, bandsCount, dst.getSampleModel().getNumBands());
+		checkReadParamBandSettings(param, BANDS_COUNT, dst.getSampleModel().getNumBands());
 
 		// Create a WritableRaster for the source.
 
 		WritableRaster wrSrc =
-				Raster.createBandedRaster(DataBuffer.TYPE_BYTE, (int)ddsHeader.getWidth(), 1, bandsCount, new Point(0, 0));
+				Raster.createBandedRaster(DataBuffer.TYPE_BYTE, (int)ddsHeader.getWidth(imageIndex), 1, BANDS_COUNT, new Point(0, 0));
 
 		byte[][] banks;
 		banks = ((DataBufferByte) wrSrc.getDataBuffer()).getBankData();
@@ -235,7 +258,7 @@ public class DDSImageReader extends ImageReader {
 
 		if (sourceBands != null) {
 			wrSrc =
-					wrSrc.createWritableChild(0, 0, (int)ddsHeader.getWidth(), 1, 0, 0, sourceBands);
+					wrSrc.createWritableChild(0, 0, (int)ddsHeader.getWidth(imageIndex), 1, 0, 0, sourceBands);
 		}
 
 		// Create a child raster that exposes only the desired destination
@@ -251,9 +274,9 @@ public class DDSImageReader extends ImageReader {
 		try {
 			int[] pixel = wrSrc.getPixel(0, 0, (int[]) null);
 
-			for (srcY = 0; srcY < ddsHeader.getHeight(); srcY++) {
+			for (srcY = 0; srcY < ddsHeader.getHeight(imageIndex); srcY++) {
 				// Read the next row from the DDS file.
-				ddsLineReader.readLine(stream, ddsHeader, banks);
+				ddsLineReader.readLine(stream, ddsHeader, banks, imageIndex);
 
 				// Reject rows that lie outside the source region, or which are
 				// not part of the subsampling.
