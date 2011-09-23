@@ -2,6 +2,11 @@
  * DDSLineReader.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
+ * 
+ * COPYRIGHT NOTICE:
+ * Java DDS ImageIO Plugin is based on code from the DDS GIMP plugin.
+ * Copyright (C) 2004-2010 Shawn Kirst <skirst@insightbb.com>,
+ * Copyright (C) 2003 Arne Reuter <homepage@arnereuter.de>
  *
  * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * [TODO] DESCRIPTION
+ * TODO Write File Description for DDSLineReader.java
  */
 
 package net.nikr.dds;
@@ -42,19 +47,19 @@ public class DDSLineReader {
 		lineNumber = 0;
 	}
 	
-	public void readLine(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
+	public void readLine(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, int imageIndex) throws IOException{
 		switch (ddsHeader.getPixelFormat().getFormat()){
 			case UNCOMPRESSED:
-				readUncompressed(stream, ddsHeader, banks);
+				readUncompressed(stream, ddsHeader, banks, imageIndex);
 				break;
 			case DXT1:
 			case DXT3:
 			case DXT5:
-				readDXT(stream, ddsHeader, banks);
+				readDXT(stream, ddsHeader, banks, imageIndex);
 				break;
 			case ATI1:
 			case ATI2:
-				readATI(stream, ddsHeader, banks);
+				readATI(stream, ddsHeader, banks, imageIndex);
 				break;
 			default:
 				throw new IOException(ddsHeader.getPixelFormat().getFormat().getName()+" is not a supported format!");
@@ -67,8 +72,8 @@ public class DDSLineReader {
 		System.out.println(bitmask);
 	}
 	
-	private void readUncompressed(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
-		for (int x = 0; x < ddsHeader.getWidth(); x++) {
+	private void readUncompressed(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, int imageIndex) throws IOException{
+		for (int x = 0; x < ddsHeader.getWidth(imageIndex); x++) {
 
 			long pixel = 0;
 			switch ((int)ddsHeader.getPixelFormat().getRgbBitCount()){
@@ -135,12 +140,12 @@ public class DDSLineReader {
 		}
 	}
 	
-	private void readDXT(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks) throws IOException{
+	private void readDXT(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, int imageIndex) throws IOException{
 		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
 			//System.out.println("Read line: "+y);
-			linesColor = new byte[LINES_PER_READ][(int)ddsHeader.getWidth()][COLORS_PER_READ];
-			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
+			linesColor = new byte[LINES_PER_READ][(int)Math.max(ddsHeader.getWidth(imageIndex), 8)][COLORS_PER_READ];
+			for (int x = 0; x < (ddsHeader.getWidth(imageIndex)); x = x + 4) {
 				if (ddsHeader.getPixelFormat().isDXT3()){
 					decodeDXT3AlphaBlock(stream, ddsHeader, x);
 				}
@@ -150,7 +155,7 @@ public class DDSLineReader {
 				decodeColorBlock(stream, ddsHeader, banks, x);
 			}
 		}
-		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
+		for (int x = 0; x < (ddsHeader.getWidth(imageIndex)); x++) {
 			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
 			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
 			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
@@ -159,12 +164,12 @@ public class DDSLineReader {
 		lineNumber++;
 	}
 	
-	private void readATI(ImageInputStream stream, DDSHeader ddsHeader, byte[][] banks) throws IOException{
+	private void readATI(ImageInputStream stream, DDSHeader ddsHeader, byte[][] banks, int imageIndex) throws IOException{
 		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
-			linesColor = new byte[LINES_PER_READ][(int)ddsHeader.getWidth()][COLORS_PER_READ];
-			for (int x = 0; x < (ddsHeader.getWidth()); x = x + 4) {
-				if (ddsHeader.getPixelFormat().isATI1N()){
+			linesColor = new byte[LINES_PER_READ][(int)Math.max(ddsHeader.getWidth(imageIndex), 8)][COLORS_PER_READ];
+			for (int x = 0; x < (ddsHeader.getWidth(imageIndex)); x = x + 4) {
+				if (ddsHeader.getPixelFormat().isATI1()){
 					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_RED);
 					for (int yi = 0; yi < 4 ; yi++){
 						for (int xi = 0; xi < 4; xi++){
@@ -174,7 +179,7 @@ public class DDSLineReader {
 						}
 					}
 				}
-				if (ddsHeader.getPixelFormat().isATI2N()){
+				if (ddsHeader.getPixelFormat().isATI2()){
 					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_GREEN);
 					decodeAtiAndDxt5AlphaBlock(stream, ddsHeader, x, BANK_RED);
 					for (int yi = 0; yi < 4 ; yi++){
@@ -186,7 +191,7 @@ public class DDSLineReader {
 				}
 			}
 		}
-		for (int x = 0; x < (ddsHeader.getWidth()); x++) {
+		for (int x = 0; x < (ddsHeader.getWidth(imageIndex)); x++) {
 			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
 			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
 			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
@@ -324,7 +329,7 @@ public class DDSLineReader {
 		bits[4] = bits4 + 256 * (bits5);
 		bits[5] = bits5;
 		
-		//[FIXME] is not calulated... should:  multiplying by 1/255.
+		//FIXME is not calulated... should:  multiplying by 1/255.
 		if (color0 > -128){
 			color[0] = color0;
 		} else {

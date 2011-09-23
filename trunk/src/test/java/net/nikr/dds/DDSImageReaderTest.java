@@ -2,6 +2,11 @@
  * DDSImageReaderTest.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
+ * 
+ * COPYRIGHT NOTICE:
+ * Java DDS ImageIO Plugin is based on code from the DDS GIMP plugin.
+ * Copyright (C) 2004-2010 Shawn Kirst <skirst@insightbb.com>,
+ * Copyright (C) 2003 Arne Reuter <homepage@arnereuter.de>
  *
  * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * [TODO] DESCRIPTION
+ * TODO Write File Description for DDSImageReaderTest.java
  */
 
 package net.nikr.dds;
@@ -156,11 +161,13 @@ public class DDSImageReaderTest {
 	public void testGetWidth() throws Exception {
 		System.out.println("getWidth");
 		for (int i = 0; i < params.length; i++){
+			int width = params[i].getWidth();
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
 				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
 				instance.setInput( getInput(i) );
 				int result = instance.getWidth(imageIndex);
-				assertEquals(result, params[i].getWidth() / (imageIndex+1));
+				assertEquals(result, width);
+				width = width / 2;
 			}
 		}
 	}
@@ -172,11 +179,13 @@ public class DDSImageReaderTest {
 	public void testGetHeight() throws Exception {
 		System.out.println("getHeight");
 		for (int i = 0; i < params.length; i++){
+			int height = params[i].getHeight();
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
 				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
 				instance.setInput( getInput(i) );
 				int result = instance.getHeight(imageIndex);
-				assertEquals(result, params[i].getHeight() / (imageIndex+1));
+				assertEquals(result, height);
+				height = height / 2;
 			}
 		}
 	}
@@ -203,6 +212,7 @@ public class DDSImageReaderTest {
 	 */
 	@Test
 	public void testGetStreamMetadata() {
+		//TODO no meta data returned...
 		System.out.println("getStreamMetadata");
 		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
 		IIOMetadata result = instance.getStreamMetadata();
@@ -214,6 +224,7 @@ public class DDSImageReaderTest {
 	 */
 	@Test
 	public void testGetImageMetadata() {
+		//TODO no meta data returned...
 		System.out.println("getImageMetadata");
 		int imageIndex = 0;
 		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
@@ -225,16 +236,22 @@ public class DDSImageReaderTest {
 	 * Test of read method, of class DDSImageReader.
 	 */
 	@Test
-	public void testRead() throws Exception {
+	public void testRead() throws IOException {
 		System.out.println("read");
 		for (int i = 0; i < params.length; i++){
 			System.out.println(params[i].getName());
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				ImageReadParam param = null;
 				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
 				instance.setInput( getInput(i) );
-				BufferedImage result = instance.read(imageIndex, param);
-				assertNotNull(result);
+				BufferedImage result;
+				try {
+					result = instance.read(imageIndex);
+					assertNotNull(result);
+				} catch (IOException ex) {
+					fail("Failed to read imageIndex "+imageIndex+" from "+params[i].getName());
+					throw ex;
+				}
+				
 			}
 		}
 	}
@@ -245,16 +262,14 @@ public class DDSImageReaderTest {
 	@Test
 	public void testImageIO() throws Exception {
 		System.out.println("ImageIO");
-		
-			for (TestParams param : params){
-				try {
-					System.out.println(param.getName());
-					ImageIO.read(new File(param.getFilename()));
-				} catch (IOException ex) {
-					fail("testImageIO -> Fail for file: "+param.getName()+" -> "+ex.getMessage());
-				}
+		for (TestParams param : params){
+			try {
+				System.out.println(param.getName());
+				ImageIO.read(new File(param.getFilename()));
+			} catch (IOException ex) {
+				fail("testImageIO -> Fail for file: "+param.getName()+" -> "+ex.getMessage());
 			}
-		
+		}
 	}
 	
 	private Object getInput(int i){

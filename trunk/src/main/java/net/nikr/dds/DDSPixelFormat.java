@@ -2,6 +2,11 @@
  * DDSPixelFormat.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
+ * 
+ * COPYRIGHT NOTICE:
+ * Java DDS ImageIO Plugin is based on code from the DDS GIMP plugin.
+ * Copyright (C) 2004-2010 Shawn Kirst <skirst@insightbb.com>,
+ * Copyright (C) 2003 Arne Reuter <homepage@arnereuter.de>
  *
  * Java DDS ImageIO Plugin is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * [TODO] DESCRIPTION
+ * TODO Write File Description for DDSPixelFormat.java
  */
 
 
@@ -172,8 +177,8 @@ public class DDSPixelFormat {
 		if (isDXT3()) return Format.DXT3;
 		if (isDXT4()) return Format.DXT4;
 		if (isDXT5()) return Format.DXT5;
-		if (isATI1N()) return Format.ATI1;
-		if (isATI2N()) return Format.ATI2;
+		if (isATI1()) return Format.ATI1;
+		if (isATI2()) return Format.ATI2;
 		if (fourCC == Format.BC4U.getFourCC()) return Format.BC4U;
 		if (fourCC == Format.BC4S.getFourCC()) return Format.BC4S;
 		if (fourCC == Format.BC5S.getFourCC()) return Format.BC5S;
@@ -203,10 +208,10 @@ public class DDSPixelFormat {
 	public boolean isDXT5(){
 		return (fourCC == Format.DXT5.getFourCC());
 	}
-	public boolean isATI1N(){
+	public boolean isATI1(){
 		return (fourCC == Format.ATI1.getFourCC());
 	}
-	public boolean isATI2N(){
+	public boolean isATI2(){
 		return (fourCC == Format.ATI2.getFourCC());
 	}
 	
