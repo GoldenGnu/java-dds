@@ -38,6 +38,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -49,6 +50,8 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.GroupLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -69,6 +72,11 @@ public class Viewer implements KeyListener, ActionListener{
 	private static final String ACTION_YCOCG = "ACTION_YCOCG";
 	private static final String ACTION_YCOCG_SCALED = "ACTION_YCOCG_SCALED";
 	private static final String ACTION_ALPHA_EXPONENT = "ACTION_ALPHA_EXPONENT";
+	private static final String ACTION_SHOW_ALPHA = "ACTION_SHOW_ALPHA";
+	private static final String ACTION_SHOW_RED = "ACTION_SHOW_RED";
+	private static final String ACTION_SHOW_GREEN = "ACTION_SHOW_GREEN";
+	private static final String ACTION_SHOW_BLUE = "ACTION_SHOW_BLUE";
+	private static final String ACTION_BACKGROUND_COLOR = "ACTION_BACKGROUND_COLOR";
 	
 	private enum ColorType{
 		RBG,
@@ -76,16 +84,20 @@ public class Viewer implements KeyListener, ActionListener{
 		YCOCG_SCALED,
 		ALPHA_EXPONENT
 	}
+	private boolean alpha = true;
+	private boolean red = true;
+	private boolean green = true;
+	private boolean blue = true;
 	
 	//Frame
 	private JFrame jFrame;
 	private JLabel jImageLabel;
 	private JLabel jTextLabel;
 	
-	private List<File> files;
+	private List<File> files = new ArrayList<File>();
 	private Item item;
 	private ColorType type;
-	private int fileIndex;
+	private int fileIndex = 0;
 	private int mipMap;
 	private boolean updating = false;
 	
@@ -126,18 +138,25 @@ public class Viewer implements KeyListener, ActionListener{
 		jImageLabel.setBackground( Color.magenta);
 		jImageLabel.setOpaque(true);
 
-		jTextLabel = new JLabel("Nothing loaded...");
+		jTextLabel = new JLabel();
 		jTextLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		jTextLabel.setHorizontalAlignment(JLabel.CENTER);
 
 		jImagePanel.add(jImageLabel);
 		jImagePanel.add(jTextLabel);
 		
+		JCheckBoxMenuItem jCheckBoxMenuItem;
+		JMenuBar jMenuBar;
+		JMenu jMenu, jSubMenu;
+		JMenuItem jMenuItem;
+		JRadioButtonMenuItem jRadioButtonMenuItem;
 		
-		JMenuBar jMenuBar = new JMenuBar();
-		JMenu jMenu = new JMenu("File");
+		jMenuBar = new JMenuBar();
+		
+		jMenu = new JMenu("File");
 		jMenuBar.add(jMenu);
-		JMenuItem jMenuItem = new JMenuItem("Open");
+		
+		jMenuItem = new JMenuItem("Open");
 		jMenuItem.setActionCommand(ACTION_OPEN);
 		jMenuItem.addActionListener(this);
 		jMenu.add(jMenuItem);
@@ -148,30 +167,66 @@ public class Viewer implements KeyListener, ActionListener{
 		
 		ButtonGroup group = new ButtonGroup();
 		
-		JRadioButtonMenuItem rbMenuItem = new JRadioButtonMenuItem("RBG");
-		rbMenuItem.setSelected(true);
-		rbMenuItem.setActionCommand(ACTION_RBG);
-		rbMenuItem.addActionListener(this);
-		jMenu.add(rbMenuItem);
-		group.add(rbMenuItem);
+		jSubMenu = new JMenu("Mode");
+		jMenu.add(jSubMenu);
 		
-		rbMenuItem = new JRadioButtonMenuItem("YCoCg");
-		rbMenuItem.setActionCommand(ACTION_YCOCG);
-		rbMenuItem.addActionListener(this);
-		jMenu.add(rbMenuItem);
-		group.add(rbMenuItem);
+		jRadioButtonMenuItem = new JRadioButtonMenuItem("RBG");
+		jRadioButtonMenuItem.setSelected(true);
+		jRadioButtonMenuItem.setActionCommand(ACTION_RBG);
+		jRadioButtonMenuItem.addActionListener(this);
+		jSubMenu.add(jRadioButtonMenuItem);
+		group.add(jRadioButtonMenuItem);
 		
-		rbMenuItem = new JRadioButtonMenuItem("YCoCg Scaled");
-		rbMenuItem.setActionCommand(ACTION_YCOCG_SCALED);
-		rbMenuItem.addActionListener(this);
-		jMenu.add(rbMenuItem);
-		group.add(rbMenuItem);
+		jRadioButtonMenuItem = new JRadioButtonMenuItem("YCoCg");
+		jRadioButtonMenuItem.setActionCommand(ACTION_YCOCG);
+		jRadioButtonMenuItem.addActionListener(this);
+		jSubMenu.add(jRadioButtonMenuItem);
+		group.add(jRadioButtonMenuItem);
 		
-		rbMenuItem = new JRadioButtonMenuItem("Alpha Exponent");
-		rbMenuItem.setActionCommand(ACTION_ALPHA_EXPONENT);
-		rbMenuItem.addActionListener(this);
-		jMenu.add(rbMenuItem);
-		group.add(rbMenuItem);
+		jRadioButtonMenuItem = new JRadioButtonMenuItem("YCoCg Scaled");
+		jRadioButtonMenuItem.setActionCommand(ACTION_YCOCG_SCALED);
+		jRadioButtonMenuItem.addActionListener(this);
+		jSubMenu.add(jRadioButtonMenuItem);
+		group.add(jRadioButtonMenuItem);
+		
+		jRadioButtonMenuItem = new JRadioButtonMenuItem("Alpha Exponent");
+		jRadioButtonMenuItem.setActionCommand(ACTION_ALPHA_EXPONENT);
+		jRadioButtonMenuItem.addActionListener(this);
+		jSubMenu.add(jRadioButtonMenuItem);
+		group.add(jRadioButtonMenuItem);
+		
+		jMenu.addSeparator();
+		
+		jMenuItem = new JMenuItem("Background Color...");
+		jMenuItem.setActionCommand(ACTION_BACKGROUND_COLOR);
+		jMenuItem.addActionListener(this);
+		jMenu.add(jMenuItem);
+		
+		jMenu.addSeparator();
+		
+		jCheckBoxMenuItem = new JCheckBoxMenuItem("Show alpha channel");
+		jCheckBoxMenuItem.setActionCommand(ACTION_SHOW_ALPHA);
+		jCheckBoxMenuItem.addActionListener(this);
+		jCheckBoxMenuItem.setSelected(alpha);
+		jMenu.add(jCheckBoxMenuItem);
+		
+		jCheckBoxMenuItem = new JCheckBoxMenuItem("Show red channel");
+		jCheckBoxMenuItem.setActionCommand(ACTION_SHOW_RED);
+		jCheckBoxMenuItem.addActionListener(this);
+		jCheckBoxMenuItem.setSelected(red);
+		jMenu.add(jCheckBoxMenuItem);
+		
+		jCheckBoxMenuItem = new JCheckBoxMenuItem("Show green channel");
+		jCheckBoxMenuItem.setActionCommand(ACTION_SHOW_GREEN);
+		jCheckBoxMenuItem.addActionListener(this);
+		jCheckBoxMenuItem.setSelected(green);
+		jMenu.add(jCheckBoxMenuItem);
+		
+		jCheckBoxMenuItem = new JCheckBoxMenuItem("Show blue channel");
+		jCheckBoxMenuItem.setActionCommand(ACTION_SHOW_BLUE);
+		jCheckBoxMenuItem.addActionListener(this);
+		jCheckBoxMenuItem.setSelected(blue);
+		jMenu.add(jCheckBoxMenuItem);
 		
 		jFrame = new JFrame("DDS Viewer");
 		jFrame.setSize(850, 600);
@@ -197,7 +252,7 @@ public class Viewer implements KeyListener, ActionListener{
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		JDialog.setDefaultLookAndFeelDecorated(true);
 
-		Viewer runtest = new Viewer();
+		Viewer viewer = new Viewer();
 	}
 
 	private static void initLookAndFeel() {
@@ -217,14 +272,15 @@ public class Viewer implements KeyListener, ActionListener{
 	}
 	
 	public void loadFile(){
-		loadFile(files.get(fileIndex), mipMap);
+		if (!files.isEmpty()) loadFile(files.get(fileIndex), mipMap);
 	}
 	
 	public void loadFile(File file){
-		loadFile(file, 0);
+		if (!files.isEmpty()) loadFile(file, 0);
 	}
 	
 	public void loadFile(File file, int imageIndex){
+		if (files.isEmpty()) return;
         Iterator<ImageReader> iterator = ImageIO.getImageReadersBySuffix("dds");
         if (iterator.hasNext()){
 			try {
@@ -236,6 +292,7 @@ public class Viewer implements KeyListener, ActionListener{
 				if (type == ColorType.YCOCG) DDSUtil.decodeYCoCg(image);
 				if (type == ColorType.YCOCG_SCALED) DDSUtil.decodeYCoCgScaled(image);
 				if (type == ColorType.ALPHA_EXPONENT) DDSUtil.decodeAlphaExponent(image);
+				if (!alpha || !red || !green || !blue) DDSUtil.showColors(image, alpha, red, green, blue);
 				item = new Item(image, file);
 				update();
 			} catch (Exception ex) {
@@ -245,12 +302,13 @@ public class Viewer implements KeyListener, ActionListener{
         }
 	}
 	
-	public int getMipMaps(File file){
+	public int getMipMaps(){
+		if (files.isEmpty()) return 0;
         Iterator<ImageReader> iterator = ImageIO.getImageReadersBySuffix("dds");
         if (iterator.hasNext()){
 			try {
 				ImageReader imageReader = iterator.next();
-				imageReader.setInput(new FileImageInputStream(file));
+				imageReader.setInput(new FileImageInputStream(files.get(fileIndex)));
 				return imageReader.getNumImages(true);
 			} catch (Exception ex) {
 				System.out.println("getMipMaps fail...");
@@ -262,15 +320,6 @@ public class Viewer implements KeyListener, ActionListener{
 	private void update(){
 		jImageLabel.setIcon(new ImageIcon(item.getImage()));
 		jTextLabel.setText(item.getFile().getName());
-		
-		/*
-		jTextLabel.setPreferredSize(null);
-		Dimension dimension = new Dimension(Math.max(jTextLabel.getPreferredSize().width, jImageLabel.getPreferredSize().width), jTextLabel.getPreferredSize().height);
-		jTextLabel.setMaximumSize(dimension);
-		jTextLabel.setPreferredSize(dimension);
-		jTextLabel.setMinimumSize(dimension);
-		 * 
-		 */
 	}
 	
 	@Override
@@ -297,6 +346,28 @@ public class Viewer implements KeyListener, ActionListener{
 		if (ACTION_ALPHA_EXPONENT.equals(e.getActionCommand())){
 			type = ColorType.ALPHA_EXPONENT;
 			loadFile();
+		}
+		if (ACTION_SHOW_ALPHA.equals(e.getActionCommand())){
+			alpha = !alpha;
+			loadFile();
+		}
+		if (ACTION_SHOW_RED.equals(e.getActionCommand())){
+			red = !red;
+			loadFile();
+		}
+		if (ACTION_SHOW_GREEN.equals(e.getActionCommand())){
+			green = !green;
+			loadFile();
+		}
+		if (ACTION_SHOW_BLUE.equals(e.getActionCommand())){
+			blue = !blue;
+			loadFile();
+		}
+		if (ACTION_BACKGROUND_COLOR.equals(e.getActionCommand())){
+			Color color = JColorChooser.showDialog(jFrame, "Choose Background Color", jImageLabel.getBackground());
+			if (color != null){
+				jImageLabel.setBackground(color);
+			}
 		}
 	}
 	
@@ -334,7 +405,7 @@ public class Viewer implements KeyListener, ActionListener{
 				if (!updating){
 					updating = true;
 					mipMap--;
-					if (mipMap >= 0 && mipMap < getMipMaps(files.get(fileIndex))){
+					if (mipMap >= 0 && mipMap < getMipMaps()){
 						loadFile();
 					} else {
 						mipMap++;
@@ -348,7 +419,7 @@ public class Viewer implements KeyListener, ActionListener{
 				if (!updating){
 					updating = true;
 					mipMap++;
-					if (mipMap >= 0 && mipMap < getMipMaps(files.get(fileIndex))){
+					if (mipMap >= 0 && mipMap < getMipMaps()){
 						loadFile();
 					} else {
 						mipMap--;
