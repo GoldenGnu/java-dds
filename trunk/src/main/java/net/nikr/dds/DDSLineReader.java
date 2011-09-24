@@ -75,7 +75,7 @@ public class DDSLineReader {
 	}
 	
 	private void readUncompressed(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, int imageIndex) throws IOException{
-		long amask, rmask, gmask, bmask, pixel, a, r, g, b;
+		long pixel, a, r, g, b;
 		for (int x = 0; x < ddsHeader.getWidth(imageIndex); x++) {
 			pixel = 0;
 			switch ((int)ddsHeader.getPixelFormat().getRgbBitCount()){
@@ -99,10 +99,6 @@ public class DDSLineReader {
 					break;
 			}
 			DDSPixelFormat pf = ddsHeader.getPixelFormat();
-			amask = pf.getAlphaBitMask() >> pf.getAlphaShift() << (8 - pf.getAlphaBits());
-			rmask = pf.getRedBitMask() >> pf.getRedShift() << (8 - pf.getRedBits());
-			gmask = pf.getGreenBitMask() >> pf.getGreenShift() << (8 - pf.getGreenBits());
-			bmask = pf.getBlueBitMask() >> pf.getBlueShift() << (8 - pf.getBlueBits());
 			
 			a = 255;
 			r = 255;
@@ -110,28 +106,28 @@ public class DDSLineReader {
 			b = 255;
 
 			if ((pf.getRgbBitCount() == 32)
-					&& (pf.getRedBitMask() == 0x3ff00000l)
-					&& (pf.getGreenBitMask() == 0xffc00l)
-					&& (pf.getBlueBitMask() == 0x3ffl) && (pf.getAlphaBitMask() == 0xc0000000l)){
+					&& (pf.getMaskRed() == 0x3ff00000l)
+					&& (pf.getMaskGreen() == 0xffc00l)
+					&& (pf.getMaskBlue() == 0x3ffl) && (pf.getMaskAlpha() == 0xc0000000l)){
 				//RGB10A2
-				r = (pixel >> pf.getRedShift()) >> 2;
-				g = (pixel >> pf.getGreenShift()) >> 2;
-				b = (pixel >> pf.getBlueShift()) >> 2;
+				r = (pixel >> pf.getShiftRed()) >> 2;
+				g = (pixel >> pf.getShiftGreen()) >> 2;
+				b = (pixel >> pf.getShiftBlue()) >> 2;
 				if(pf.isAlphaPixels()){
-					a = (pixel >> pf.getAlphaShift() << (8 - pf.getAlphaBits()) & amask) * 255 / amask;
+					a = (pixel >> pf.getShiftAlpha() << (8 - pf.getBitsAlpha()) & pf.getMaskFixedAlpha()) * 255 / pf.getMaskFixedAlpha();
 				}
 			} else {
-				if (amask != 0){
-					a = (pixel >> pf.getAlphaShift() << (8 - pf.getAlphaBits()) & amask) * 255 / amask;
+				if (pf.getMaskFixedAlpha() != 0){
+					a = (pixel >> pf.getShiftAlpha() << (8 - pf.getBitsAlpha()) & pf.getMaskFixedAlpha()) * 255 / pf.getMaskFixedAlpha();
 				}
-				if (rmask != 0){
-					r = (pixel >> pf.getRedShift() << (8 - pf.getRedBits()) & rmask) * 255 / rmask;
+				if (pf.getMaskFixedRed() != 0){
+					r = (pixel >> pf.getShiftRed() << (8 - pf.getBitsRed()) & pf.getMaskFixedRed()) * 255 / pf.getMaskFixedRed();
 				}
-				if (gmask != 0){
-					g = (pixel >> pf.getGreenShift() << (8 - pf.getGreenBits()) & gmask) * 255 / gmask;
+				if (pf.getMaskFixedGreen() != 0){
+					g = (pixel >> pf.getShiftGreen() << (8 - pf.getBitsGreen()) & pf.getMaskFixedGreen()) * 255 / pf.getMaskFixedGreen();
 				}
-				if (bmask != 0){
-					b = (pixel >> pf.getBlueShift() << (8 - pf.getBlueBits()) & bmask) * 255 / bmask;
+				if (pf.getMaskFixedBlue() != 0){
+					b = (pixel >> pf.getShiftBlue() << (8 - pf.getBitsBlue()) & pf.getMaskFixedBlue()) * 255 / pf.getMaskFixedBlue();
 				}
 			}
 			
