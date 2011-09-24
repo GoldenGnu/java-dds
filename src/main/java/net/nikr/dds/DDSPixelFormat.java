@@ -91,6 +91,10 @@ public class DDSPixelFormat {
 	private long gMask;
 	private long bMask;
     private long aMask;
+    private long rMaskFixed;
+	private long gMaskFixed;
+	private long bMaskFixed;
+    private long aMaskFixed;
     private int rShift;
 	private int gShift;
 	private int bShift;
@@ -102,25 +106,35 @@ public class DDSPixelFormat {
 	/**
 	 * Creates a new instance of DDSPixelFormat
 	 */
-	public DDSPixelFormat(int size, long flags, long fourCC, long rgbBitCount, long rBitMask, long gBitMask, long bBitMask, long aBitMask) {
+	public DDSPixelFormat(int size, long flags, long fourCC, long rgbBitCount, long rMask, long gMask, long bMask, long aMask) {
 		this.size = size;
 		this.flags = flags;
 		this.fourCC = fourCC;
 		this.rgbBitCount = rgbBitCount;
-		this.rMask = rBitMask;
-		this.gMask = gBitMask;
-		this.bMask = bBitMask;
-		this.aMask = aBitMask;
+		this.rMask = rMask;
+		this.gMask = gMask;
+		this.bMask = bMask;
+		this.aMask = aMask;
 		
-		this.rShift = shift(rBitMask);
-		this.gShift = shift(gBitMask);
-		this.bShift = shift(bBitMask);
-		this.aShift = shift(aBitMask);
+		this.rMask = rMask;
+		this.gMask = gMask;
+		this.bMask = bMask;
+		this.aMask = aMask;
 		
-		this.rBits = bits(rBitMask);
-		this.gBits = bits(gBitMask);
-		this.bBits = bits(bBitMask);
-		this.aBits = bits(aBitMask);
+		this.rShift = shift(rMask);
+		this.gShift = shift(gMask);
+		this.bShift = shift(bMask);
+		this.aShift = shift(aMask);
+		
+		this.rBits = bits(rMask);
+		this.gBits = bits(gMask);
+		this.bBits = bits(bMask);
+		this.aBits = bits(aMask);
+		
+		this.rMaskFixed = rMask >> rShift << (8 - rBits);
+		this.gMaskFixed = gMask >> gShift << (8 - gBits);
+		this.bMaskFixed = bMask >> bShift << (8 - bBits);
+		this.aMaskFixed = aMask >> aShift << (8 - aBits);
 	}
 
 	public int getSize() {
@@ -135,40 +149,52 @@ public class DDSPixelFormat {
 	public long getRgbBitCount() {
 		return rgbBitCount;
 	}
-	public long getRedBitMask() {
+	public long getMaskRed() {
 		return rMask;
 	}
-	public long getGreenBitMask() {
+	public long getMaskGreen() {
 		return gMask;
 	}
-	public long getBlueBitMask() {
+	public long getMaskBlue() {
 		return bMask;
 	}
-	public long getAlphaBitMask() {
+	public long getMaskAlpha() {
 		return aMask;
 	}
-	public int getRedShift() {
+	public long getMaskFixedRed() {
+		return rMaskFixed;
+	}
+	public long getMaskFixedGreen() {
+		return gMaskFixed;
+	}
+	public long getMaskFixedBlue() {
+		return bMaskFixed;
+	}
+	public long getMaskFixedAlpha() {
+		return aMaskFixed;
+	}
+	public int getShiftRed() {
 		return rShift;
 	}
-	public int getGreenShift() {
+	public int getShiftGreen() {
 		return gShift;
 	}
-	public int getBlueShift() {
+	public int getShiftBlue() {
 		return bShift;
 	}
-	public int getAlphaShift() {
+	public int getShiftAlpha() {
 		return aShift;
 	}
-	public int getRedBits() {
+	public int getBitsRed() {
 		return rBits;
 	}
-	public int getGreenBits() {
+	public int getBitsGreen() {
 		return gBits;
 	}
-	public int getBlueBits() {
+	public int getBitsBlue() {
 		return bBits;
 	}
-	public int getAlphaBits() {
+	public int getBitsAlpha() {
 		return aBits;
 	}
 	public Format getFormat(){
