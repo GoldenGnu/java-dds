@@ -23,7 +23,7 @@ public class ProfileRunner {
 
 	public ProfileRunner(String[] args) {
 		List<String> argsList = Arrays.asList(args);
-		if (argsList.contains("-24bit")) the24bitX100();
+		if (argsList.contains("-24bit")) x100("src\\test\\resources\\net\\nikr\\dds\\gimp\\rgb8.dds");
 		if (argsList.contains("-all")) all();
 	}
 	
@@ -32,13 +32,14 @@ public class ProfileRunner {
 		ProfileRunner profileRunner = new ProfileRunner(args);
 	}
 	
-	private void the24bitX100(){
-		File file = new File("src\\test\\resources\\net\\nikr\\dds\\gimp\\rgb8.dds");
+	private void x100(String filename){
+		File file = new File(filename);
 		for (int i = 0; i < 100; i++){
 			BufferedImage image = loadFile(file, 0);
-				for (int imageIndex = 1; image != null; imageIndex++){
-					image = loadFile(file, imageIndex);
-				}
+			for (int imageIndex = 1; image != null; imageIndex++){
+				image = loadFile(file, imageIndex);
+			}
+			System.out.println((i+1)+" of 100 done...");
 		}
 	}
 	

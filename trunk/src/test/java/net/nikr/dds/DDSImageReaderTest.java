@@ -103,7 +103,6 @@ public class DDSImageReaderTest {
 		new TestParams("gimp\\ycocg.dds", 9, 256, 256),				//NONE YCoCg
 		new TestParams("gimp\\ycocg_dxt5.dds", 9, 256, 256),		//DXT5 (YCoCg)
 		new TestParams("gimp\\ycocg_scaled_dxt5.dds", 9, 256, 256),	//DXT5 (YCoCg scaled)
-		
 	};
     
 	
@@ -168,7 +167,7 @@ public class DDSImageReaderTest {
 				instance.setInput( getInput(i) );
 				int result = instance.getWidth(imageIndex);
 				assertEquals(result, width);
-				width = width / 2;
+				width = Math.max(width / 2, 1);
 			}
 		}
 	}

@@ -87,15 +87,10 @@ public class DDSHeader {
 		return flags;
 	}
 	public long getHeight(int mipMap) {
-		return height >> mipMap;
+		return Math.max(height >> mipMap, 1);
 	}
 	public long getWidth(int mipMap) {
-		long nWidth = width;
-		for (int i = 0; i < mipMap; i++){
-			nWidth = nWidth / 2;
-		}
-		return nWidth;
-		//return width >> mipMap;
+		return Math.max(width >> mipMap, 1);
 	}
 	public long getPitchOrLinearSize() {
 		return pitchOrLinearSize;
