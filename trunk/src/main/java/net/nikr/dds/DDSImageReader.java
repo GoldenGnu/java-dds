@@ -110,11 +110,13 @@ public class DDSImageReader extends ImageReader {
 		return l.iterator();
 	}
 
+	//TODO create meta data
 	@Override
 	public IIOMetadata getStreamMetadata() {
 		return null;
 	}
 
+	//TODO create meta data
 	@Override
 	public IIOMetadata getImageMetadata(int imageIndex) {
 		return null;
@@ -147,7 +149,8 @@ public class DDSImageReader extends ImageReader {
 			}
 		}
 		if (skipsBytes > 0) stream.skipBytes(skipsBytes);
-		
+		long width = ddsHeader.getWidth(imageIndex);
+		long height = ddsHeader.getHeight(imageIndex);
 		// Calculate and return a Rectangle that identifies the region of the
 		// source image that should be read:
 		//
@@ -167,7 +170,7 @@ public class DDSImageReader extends ImageReader {
 		//	 2.3 param.getSubsamplingYOffset() is added to the region's y
 		//		  coordinate and subtracted from its height.
 
-		Rectangle sourceRegion = getSourceRegion(param, (int)ddsHeader.getWidth(imageIndex), (int)ddsHeader.getHeight(imageIndex));
+		Rectangle sourceRegion = getSourceRegion(param, (int)width, (int)height);
 
 		// Source subsampling is used to return a scaled-down source image.
 		// Default 1 values for X and Y subsampling indicate that a non-scaled
@@ -223,7 +226,7 @@ public class DDSImageReader extends ImageReader {
 		//	 2.1 Return getImageTypes (0)'s BufferedImage.
 
 		BufferedImage dst =
-				getDestination(param, getImageTypes(0), (int)ddsHeader.getWidth(imageIndex), (int)ddsHeader.getHeight(imageIndex));
+				getDestination(param, getImageTypes(0), (int)width, (int)height);
 
 		//dst.
 		// Verify that the number of source bands and destination bands, as
@@ -237,7 +240,7 @@ public class DDSImageReader extends ImageReader {
 		// Create a WritableRaster for the source.
 
 		WritableRaster wrSrc =
-				Raster.createBandedRaster(DataBuffer.TYPE_BYTE, (int)ddsHeader.getWidth(imageIndex), 1, BANDS_COUNT, new Point(0, 0));
+				Raster.createBandedRaster(DataBuffer.TYPE_BYTE, (int)width, 1, BANDS_COUNT, new Point(0, 0));
 
 		byte[][] banks;
 		banks = ((DataBufferByte) wrSrc.getDataBuffer()).getBankData();
@@ -258,7 +261,7 @@ public class DDSImageReader extends ImageReader {
 
 		if (sourceBands != null) {
 			wrSrc =
-					wrSrc.createWritableChild(0, 0, (int)ddsHeader.getWidth(imageIndex), 1, 0, 0, sourceBands);
+					wrSrc.createWritableChild(0, 0, (int)width, 1, 0, 0, sourceBands);
 		}
 
 		// Create a child raster that exposes only the desired destination
@@ -274,9 +277,9 @@ public class DDSImageReader extends ImageReader {
 		try {
 			int[] pixel = wrSrc.getPixel(0, 0, (int[]) null);
 
-			for (srcY = 0; srcY < ddsHeader.getHeight(imageIndex); srcY++) {
+			for (srcY = 0; srcY < height; srcY++) {
 				// Read the next row from the DDS file.
-				ddsLineReader.readLine(stream, ddsHeader, banks, imageIndex);
+				ddsLineReader.readLine(stream, ddsHeader, banks, width);
 
 				// Reject rows that lie outside the source region, or which are
 				// not part of the subsampling.

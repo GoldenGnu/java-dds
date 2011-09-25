@@ -61,13 +61,15 @@ public class DDSPixelFormat {
 		;
 
 		private String name;
+		private int fourCC;
 
 		private Format(String name) {
 			this.name = name;
+			this.fourCC = fourCC(name);
 		}
 
 		public int getFourCC() {
-			return fourCC(name);
+			return fourCC;
 		}
 
 		public String getName() {
@@ -103,6 +105,7 @@ public class DDSPixelFormat {
 	private int gBits;
 	private int bBits;
     private int aBits;
+	private Format format;
 	/**
 	 * Creates a new instance of DDSPixelFormat
 	 */
@@ -135,6 +138,8 @@ public class DDSPixelFormat {
 		this.gMaskFixed = gMask >> gShift << (8 - gBits);
 		this.bMaskFixed = bMask >> bShift << (8 - bBits);
 		this.aMaskFixed = aMask >> aShift << (8 - aBits);
+		
+		format = calcFormat();
 	}
 
 	public int getSize() {
@@ -198,23 +203,7 @@ public class DDSPixelFormat {
 		return aBits;
 	}
 	public Format getFormat(){
-		if (isDXT1()) return Format.DXT1;
-		if (isDXT2()) return Format.DXT2;
-		if (isDXT3()) return Format.DXT3;
-		if (isDXT4()) return Format.DXT4;
-		if (isDXT5()) return Format.DXT5;
-		if (isATI1()) return Format.ATI1;
-		if (isATI2()) return Format.ATI2;
-		if (fourCC == Format.BC4U.getFourCC()) return Format.BC4U;
-		if (fourCC == Format.BC4S.getFourCC()) return Format.BC4S;
-		if (fourCC == Format.BC5S.getFourCC()) return Format.BC5S;
-		if (fourCC == Format.RGBG.getFourCC()) return Format.RGBG;
-		if (fourCC == Format.GRGB.getFourCC()) return Format.GRGB;
-		if (fourCC == Format.UYVY.getFourCC()) return Format.UYVY;
-		if (fourCC == Format.YUY2.getFourCC()) return Format.YUY2;
-		if (fourCC == Format.DX10.getFourCC()) return Format.DX10;
-		if (!isCompressed()) return Format.UNCOMPRESSED;
-		return Format.NOT_DDS;
+		return format;
 	}
 	public boolean isCompressed(){
 		return ((flags & FOURCC) != 0);
@@ -240,7 +229,6 @@ public class DDSPixelFormat {
 	public boolean isATI2(){
 		return (fourCC == Format.ATI2.getFourCC());
 	}
-	
 	
 	public boolean isAlphaPixels(){
 		return ((flags & ALPHAPIXELS) != 0);
@@ -307,5 +295,25 @@ public class DDSPixelFormat {
 			mask >>= 1;
 		}
 		return i;
+	}
+	
+	private Format calcFormat(){
+		if (isDXT1()) return Format.DXT1;
+		if (isDXT2()) return Format.DXT2;
+		if (isDXT3()) return Format.DXT3;
+		if (isDXT4()) return Format.DXT4;
+		if (isDXT5()) return Format.DXT5;
+		if (isATI1()) return Format.ATI1;
+		if (isATI2()) return Format.ATI2;
+		if (fourCC == Format.BC4U.getFourCC()) return Format.BC4U;
+		if (fourCC == Format.BC4S.getFourCC()) return Format.BC4S;
+		if (fourCC == Format.BC5S.getFourCC()) return Format.BC5S;
+		if (fourCC == Format.RGBG.getFourCC()) return Format.RGBG;
+		if (fourCC == Format.GRGB.getFourCC()) return Format.GRGB;
+		if (fourCC == Format.UYVY.getFourCC()) return Format.UYVY;
+		if (fourCC == Format.YUY2.getFourCC()) return Format.YUY2;
+		if (fourCC == Format.DX10.getFourCC()) return Format.DX10;
+		if (!isCompressed()) return Format.UNCOMPRESSED;
+		return Format.NOT_DDS;
 	}
 }
