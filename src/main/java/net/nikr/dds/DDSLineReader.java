@@ -30,6 +30,7 @@ package net.nikr.dds;
 
 import java.io.IOException;
 import javax.imageio.stream.ImageInputStream;
+import net.nikr.dds.DDSPixelFormat.Format;
 
 public class DDSLineReader {
 	
@@ -47,19 +48,46 @@ public class DDSLineReader {
 		lineNumber = 0;
 	}
 	
-	public void readLine(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, long width) throws IOException{
+	public byte[] readAll(ImageInputStream stream, Format format, int bitCount, int width, int height) throws IOException{
+		byte[] bytes;
+		switch (format){
+			case UNCOMPRESSED:
+				int byteCount = (int)(bitCount/8);
+				bytes = new byte[(height*width*byteCount)];
+				stream.readFully(bytes);
+				break;
+			case DXT1:
+			case ATI1:
+				bytes = new byte[8*Math.max(1, width/4)*Math.max(1, height/4)];
+				stream.readFully(bytes);
+				break;
+			case DXT3:
+			case DXT5:
+			case ATI2:
+				bytes = new byte[16*(int)Math.max(1, width/4)*(int)Math.max(1, height/4)];
+				stream.readFully(bytes);
+				break;
+			case NOT_DDS:
+				throw new IOException("Not a supported format!");
+			default:
+				throw new IOException(format.getName()+" is not a supported format!");
+		}
+		return bytes;
+	}
+	
+	public void decodeLine(byte[] bytes, DDSHeader ddsHeader, byte [][] banks, int width, int y) throws IOException{
 		switch (ddsHeader.getPixelFormat().getFormat()){
 			case UNCOMPRESSED:
-				readUncompressed(stream, ddsHeader, banks, (int)width);
+				decodeUncompressed(bytes, ddsHeader, banks, width, y);
 				break;
 			case DXT1:
 			case DXT3:
 			case DXT5:
-				readDXT(stream, ddsHeader, banks, width);
+				decodeDXT(bytes, ddsHeader, banks, width, y);
 				break;
 			case ATI1:
 			case ATI2:
-				readATI(stream, ddsHeader, banks, width);
+				decodeATI(bytes, ddsHeader, banks, width, y);
 				break;
 			case NOT_DDS:
 				throw new IOException("Not a supported format!");
@@ -68,31 +96,24 @@ public class DDSLineReader {
 		}
 	}
 	
-	public void out(long bitmask){
-		System.out.println(Long.toBinaryString(bitmask));
-		System.out.println(Long.toHexString(bitmask));
-		System.out.println(bitmask);
-	}
-	
-	private void readUncompressed(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, int width) throws IOException{
+	private void decodeUncompressed(byte[] bytes, DDSHeader ddsHeader, byte [][] banks, int width, int y) throws IOException{
 		long pixel, a, r, g, b;
 		int byteCount = (int)(ddsHeader.getPixelFormat().getRgbBitCount()/8);
-		byte[] bytes = new byte[(width*byteCount)];
-		stream.readFully(bytes);
+		int lineOffset = y * width * byteCount;
 		for (int x = 0; x < width; x++) {
 			pixel = 0;
 			switch ((int)ddsHeader.getPixelFormat().getRgbBitCount()){
 				case 8:
-					pixel = (bytes[x] & 0xFFL);
+					pixel = (bytes[(y*width)+x] & 0xFFL);
 					break;
 				case 16:
-					pixel = (bytes[(x*byteCount)+0] & 0xFFL) | ((bytes[(x*byteCount)+1] & 0xFFL) << 8);
+					pixel = (bytes[(lineOffset+x*byteCount)+0] & 0xFFL) | ((bytes[(lineOffset+x*byteCount)+1] & 0xFFL) << 8);
 					break;
 				case 24:
-					pixel = (bytes[(x*byteCount)+0] & 0xFFL) | ((bytes[(x*byteCount)+1] & 0xFFL) << 8) | ((bytes[(x*byteCount)+2] & 0xFFL) << 16);
+					pixel = (bytes[(lineOffset+x*byteCount)+0] & 0xFFL) | ((bytes[(lineOffset+x*byteCount)+1] & 0xFFL) << 8) | ((bytes[(lineOffset+x*byteCount)+2] & 0xFFL) << 16);
 					break;
 				case 32:
-					pixel = (bytes[(x*byteCount)+0] & 0xFFL) | ((bytes[(x*byteCount)+1] & 0xFFL) << 8) | ((bytes[(x*byteCount)+2] & 0xFFL) << 16) | ((bytes[(x*byteCount)+3] & 0xFFL) << 24);
+					pixel = (bytes[(lineOffset+x*byteCount)+0] & 0xFFL) | ((bytes[(lineOffset+x*byteCount)+1] & 0xFFL) << 8) | ((bytes[(lineOffset+x*byteCount)+2] & 0xFFL) << 16) | ((bytes[(lineOffset+x*byteCount)+3] & 0xFFL) << 24);
 					break;
 			}
 			DDSPixelFormat pf = ddsHeader.getPixelFormat();
@@ -135,28 +156,25 @@ public class DDSLineReader {
 		}
 	}
 	
-	private void readDXT(ImageInputStream stream, DDSHeader ddsHeader, byte [][] banks, long width) throws IOException{
+	private void decodeDXT(byte[] bytes, DDSHeader ddsHeader, byte [][] banks, int width, int y) throws IOException{
 		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
 			//System.out.println("Read line: "+y);
 			linesColor = new byte[LINES_PER_READ][(int)Math.max(width, 8)][COLORS_PER_READ];
 			
 			if (ddsHeader.getPixelFormat().isDXT3()){
-				byte[] bytes16byte = readBytes(stream, 16, (int)width);
 				for (int x = 0; x < (width); x = x + 4) {
-					decodeDXT3AlphaBlock(bytes16byte, 16, 0, x);
-					decodeColorBlock(bytes16byte, 16, 8, x, false);
+					decodeDXT3AlphaBlock(bytes, 16, 0, x, (16 *  width / 4 * y / 4));
+					decodeColorBlock(bytes, 16, 8, x, (16 *  width / 4 * y / 4), false);
 				}
 			} else if (ddsHeader.getPixelFormat().isDXT5()){
-				byte[] bytes16byte = readBytes(stream, 16, (int)width);
 				for (int x = 0; x < (width); x = x + 4) {
-					decodeAtiAndDxt5AlphaBlock(bytes16byte, 16, 0, x, BANK_ALPHA);
-					decodeColorBlock(bytes16byte, 16, 8, x, false);
+					decodeAtiAndDxt5AlphaBlock(bytes, 16, 0, x, (16 *  width / 4 * y / 4), BANK_ALPHA);
+					decodeColorBlock(bytes, 16, 8, x, (16 *  width / 4 * y / 4), false);
 				}
 			} else {
-				byte[] bytes8byte = readBytes(stream, 8, (int)width);
 				for (int x = 0; x < width; x = x + 4) {
-					decodeColorBlock(bytes8byte, 8, 0, x,  true);
+					decodeColorBlock(bytes, 8, 0, x, (8 *  width / 4 * y / 4),  true);
 				}
 			}
 		}
@@ -169,14 +187,13 @@ public class DDSLineReader {
 		lineNumber++;
 	}
 	
-	private void readATI(ImageInputStream stream, DDSHeader ddsHeader, byte[][] banks, long width) throws IOException{
+	private void decodeATI(byte[] bytes, DDSHeader ddsHeader, byte[][] banks, int width, int y) throws IOException{
 		if (lineNumber >= LINES_PER_READ) lineNumber = 0;
 		if (lineNumber == 0){
 			linesColor = new byte[LINES_PER_READ][(int)Math.max(width, 8)][COLORS_PER_READ];
 			if (ddsHeader.getPixelFormat().isATI1()){
-				byte[] bytes8byte = readBytes(stream, 8, (int)width);
 				for (int x = 0; x < (width); x = x + 4) {
-					decodeAtiAndDxt5AlphaBlock(bytes8byte,8 , 0, x, BANK_RED);
+					decodeAtiAndDxt5AlphaBlock(bytes,8 , 0, x, (8 *  width / 4 * y / 4), BANK_RED);
 					for (int yi = 0; yi < 4 ; yi++){
 						for (int xi = 0; xi < 4; xi++){
 							linesColor[yi][x+xi][BANK_GREEN] = (byte) linesColor[yi][x+xi][BANK_RED];
@@ -187,10 +204,9 @@ public class DDSLineReader {
 				}
 			}
 			if (ddsHeader.getPixelFormat().isATI2()){
-				byte[] bytes16byte = readBytes(stream, 16, (int)width);
 				for (int x = 0; x < (width); x = x + 4) {
-					decodeAtiAndDxt5AlphaBlock(bytes16byte, 16, 0, x, BANK_GREEN);
-					decodeAtiAndDxt5AlphaBlock(bytes16byte, 16, 8, x, BANK_RED);
+					decodeAtiAndDxt5AlphaBlock(bytes, 16, 0, x, (16 *  width / 4 * y / 4), BANK_GREEN);
+					decodeAtiAndDxt5AlphaBlock(bytes, 16, 8, x, (16 *  width / 4 * y / 4), BANK_RED);
 					for (int yi = 0; yi < 4 ; yi++){
 						for (int xi = 0; xi < 4; xi++){
 							linesColor[yi][x+xi][BANK_BLUE] = (byte) 0;
@@ -209,18 +225,17 @@ public class DDSLineReader {
 		lineNumber++;
 	}
 	
-	private void decodeColorBlock(byte[] bytes, int offset, int start, int x, boolean dxt1) throws IOException{
+	private void decodeColorBlock(byte[] bytes, int offset, int start, int x, int lineOffset, boolean dxt1) throws IOException{
 		int c0lo, c0hi, c1lo, c1hi, bits0, bits1, bits2, bits3;
-		
 		//Read 8 bytes
-		c0lo =  bytes[((x/4)*offset)+(0+start)] & 0xff;
-		c0hi =  bytes[((x/4)*offset)+(1+start)] & 0xff;
-		c1lo =  bytes[((x/4)*offset)+(2+start)] & 0xff;
-		c1hi =  bytes[((x/4)*offset)+(3+start)] & 0xff;
-		bits0 = bytes[((x/4)*offset)+(4+start)] & 0xff;
-		bits1 = bytes[((x/4)*offset)+(5+start)] & 0xff;
-		bits2 = bytes[((x/4)*offset)+(6+start)] & 0xff;
-		bits3 = bytes[((x/4)*offset)+(7+start)] & 0xff;
+		c0lo =  bytes[lineOffset+(x/4*offset)+(0+start)] & 0xff;
+		c0hi =  bytes[lineOffset+(x/4*offset)+(1+start)] & 0xff;
+		c1lo =  bytes[lineOffset+(x/4*offset)+(2+start)] & 0xff;
+		c1hi =  bytes[lineOffset+(x/4*offset)+(3+start)] & 0xff;
+		bits0 = bytes[lineOffset+(x/4*offset)+(4+start)] & 0xff;
+		bits1 = bytes[lineOffset+(x/4*offset)+(5+start)] & 0xff;
+		bits2 = bytes[lineOffset+(x/4*offset)+(6+start)] & 0xff;
+		bits3 = bytes[lineOffset+(x/4*offset)+(7+start)] & 0xff;
 
 		
 		long bits = bits0 + 256 * (bits1 + 256 * (bits2 + 256 * bits3));
@@ -268,20 +283,18 @@ public class DDSLineReader {
 			}
 		}
 	}
-	private void decodeDXT3AlphaBlock(byte[] bytes, int offset, int start, int x) throws IOException{
+	private void decodeDXT3AlphaBlock(byte[] bytes, int offset, int start, int x, int lineOffset) throws IOException{
 		int a0, a1, a2, a3, a4, a5, a6, a7;
 		
-		int y = 0;
-		
 		//Read 8 Bytes
-		a0 = bytes[((x/4)*offset)+(0+start)] & 0xff;
-		a1 = bytes[((x/4)*offset)+(1+start)] & 0xff;
-		a2 = bytes[((x/4)*offset)+(2+start)] & 0xff;
-		a3 = bytes[((x/4)*offset)+(3+start)] & 0xff;
-		a4 = bytes[((x/4)*offset)+(4+start)] & 0xff;
-		a5 = bytes[((x/4)*offset)+(5+start)] & 0xff;
-		a6 = bytes[((x/4)*offset)+(6+start)] & 0xff;
-		a7 = bytes[((x/4)*offset)+(7+start)] & 0xff;
+		a0 = bytes[lineOffset+(x/4*offset)+(0+start)] & 0xff;
+		a1 = bytes[lineOffset+(x/4*offset)+(1+start)] & 0xff;
+		a2 = bytes[lineOffset+(x/4*offset)+(2+start)] & 0xff;
+		a3 = bytes[lineOffset+(x/4*offset)+(3+start)] & 0xff;
+		a4 = bytes[lineOffset+(x/4*offset)+(4+start)] & 0xff;
+		a5 = bytes[lineOffset+(x/4*offset)+(5+start)] & 0xff;
+		a6 = bytes[lineOffset+(x/4*offset)+(6+start)] & 0xff;
+		a7 = bytes[lineOffset+(x/4*offset)+(7+start)] & 0xff;
 
 		///Decompress the Alpha (in two longs, as the value is a 64bit UNSIGNED LONG)
 		long alpha0 = a0 + 256 * (a1 + 256 * (a2 + 256 * (a3 + 256)));
@@ -302,30 +315,26 @@ public class DDSLineReader {
 					//Extract the 4 bits
 					a = (int)((( alpha0 >> code) & 0x0f) * 17);
 				}
-				//Debug
-				if (x == 192 && y == 96){
-					//System.out.println("code: "+code+" a: "+a+" ("+Integer.toBinaryString(a)+")");
-				}
 				//Add the values to the alpha map
 				linesColor[yi][x+xi][BANK_ALPHA] = (byte) a;
 			}
 		}
 	}
 	
-	private void decodeAtiAndDxt5AlphaBlock(byte[] bytes, int offset, int start, int x, int bank) throws IOException{
+	private void decodeAtiAndDxt5AlphaBlock(byte[] bytes, int offset, int start, int x, int lineOffset, int bank) throws IOException{
 		int color0, color1, bits0, bits1, bits2, bits3, bits4, bits5;
 		int[] color = new int[8];
 		int[] bits = new int[6];
 
 		//Read 8 Bytes
-		color0 = bytes[((x/4)*offset)+(0+start)] & 0xff;
-		color1 = bytes[((x/4)*offset)+(1+start)] & 0xff;
-		bits0 =  bytes[((x/4)*offset)+(2+start)] & 0xff;
-		bits1 =  bytes[((x/4)*offset)+(3+start)] & 0xff;
-		bits2 =  bytes[((x/4)*offset)+(4+start)] & 0xff;
-		bits3 =  bytes[((x/4)*offset)+(5+start)] & 0xff;
-		bits4 =  bytes[((x/4)*offset)+(6+start)] & 0xff;
-		bits5 =  bytes[((x/4)*offset)+(7+start)] & 0xff;
+		color0 = bytes[lineOffset+(x/4*offset)+(0+start)] & 0xff;
+		color1 = bytes[lineOffset+(x/4*offset)+(1+start)] & 0xff;
+		bits0 =  bytes[lineOffset+(x/4*offset)+(2+start)] & 0xff;
+		bits1 =  bytes[lineOffset+(x/4*offset)+(3+start)] & 0xff;
+		bits2 =  bytes[lineOffset+(x/4*offset)+(4+start)] & 0xff;
+		bits3 =  bytes[lineOffset+(x/4*offset)+(5+start)] & 0xff;
+		bits4 =  bytes[lineOffset+(x/4*offset)+(6+start)] & 0xff;
+		bits5 =  bytes[lineOffset+(x/4*offset)+(7+start)] & 0xff;
 
 		//64bit UNSIGNED LONG - broke up into 6 ints
 		bits[0] = bits0 + 256 * (bits1 + 256);
@@ -382,12 +391,6 @@ public class DDSLineReader {
 				linesColor[yi][x+xi][bank] = (byte) color[code];
 			}
 		}
-	}
-	
-	private byte[] readBytes(ImageInputStream stream, int bytes, int width) throws IOException{
-		byte[] bytesArray = new byte[(int)Math.max((bytes*width)/4, bytes)];
-		stream.readFully(bytesArray);
-		return bytesArray;
 	}
 	
 	private int[] unpackRBG565(int rbg565){
