@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Iterator;
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
@@ -247,9 +248,9 @@ public class DDSImageReaderTest {
 				try {
 					result = instance.read(imageIndex);
 					assertNotNull(result);
-				} catch (IOException ex) {
-					fail("Failed to read imageIndex "+imageIndex+" from "+params[i].getName());
-					throw ex;
+				} catch (Exception ex) {
+					//fail("Failed to read imageIndex "+imageIndex+" from "+params[i].getName());
+					throw new IIOException("Failed to read imageIndex "+imageIndex+" from "+params[i].getName(), ex);
 				}
 				
 			}

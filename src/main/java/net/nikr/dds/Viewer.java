@@ -435,7 +435,7 @@ public class Viewer implements KeyListener, ActionListener{
 	@Override
 	public void keyReleased(KeyEvent e) {}
 	
-	public class DdsFilter extends javax.swing.filechooser.FileFilter implements FileFilter {
+	public static class DdsFilter extends javax.swing.filechooser.FileFilter implements FileFilter {
 		
 		private boolean acceptDirectories;
 
