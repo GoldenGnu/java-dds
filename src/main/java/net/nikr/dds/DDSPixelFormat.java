@@ -26,8 +26,11 @@
  * TODO Write File Description for DDSPixelFormat.java
  */
 
-
 package net.nikr.dds;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 public class DDSPixelFormat {
@@ -74,6 +77,10 @@ public class DDSPixelFormat {
 
 		public String getName() {
 			return name;
+		}
+		
+		private void setName(String name){
+			this.name = name;
 		}
 		
 		private int fourCC(String cc){
@@ -271,10 +278,10 @@ public class DDSPixelFormat {
 		System.out.print("\n");
 		System.out.println(sSpace+"	fourCC: "+fourCC+" ("+getFormat().getName()+")");
 		System.out.println(sSpace+"	rgbBitCount: "+rgbBitCount);
-		System.out.println(sSpace+"	rBitMask: "+Long.toHexString(rMask));
-		System.out.println(sSpace+"	gBitMask: "+Long.toHexString(gMask));
-		System.out.println(sSpace+"	bBitMask: "+Long.toHexString(bMask));
-		System.out.println(sSpace+"	rgbAlphaBitMask: "+Long.toHexString(aMask));
+		System.out.println(sSpace+"	rMask: "+Long.toHexString(rMask)+" int("+rMask+") fixed("+Long.toHexString(rMaskFixed)+") shift("+rShift+") bits("+rBits+")");
+		System.out.println(sSpace+"	gMask: "+Long.toHexString(gMask)+" int("+gMask+") fixed("+Long.toHexString(gMaskFixed)+") shift("+gShift+") bits("+gBits+")");
+		System.out.println(sSpace+"	bMask: "+Long.toHexString(bMask)+" int("+bMask+") fixed("+Long.toHexString(bMaskFixed)+") shift("+bShift+") bits("+bBits+")");
+		System.out.println(sSpace+"	aMask: "+Long.toHexString(aMask)+" int("+aMask+") fixed("+Long.toHexString(aMaskFixed)+") shift("+aShift+") bits("+aBits+")");
 		System.out.println(sSpace+"	Format: "+getFormat().getName());
 	}
 	
@@ -298,22 +305,66 @@ public class DDSPixelFormat {
 	}
 	
 	private Format calcFormat(){
-		if (isDXT1()) return Format.DXT1;
-		if (isDXT2()) return Format.DXT2;
-		if (isDXT3()) return Format.DXT3;
-		if (isDXT4()) return Format.DXT4;
-		if (isDXT5()) return Format.DXT5;
-		if (isATI1()) return Format.ATI1;
-		if (isATI2()) return Format.ATI2;
-		if (fourCC == Format.BC4U.getFourCC()) return Format.BC4U;
-		if (fourCC == Format.BC4S.getFourCC()) return Format.BC4S;
-		if (fourCC == Format.BC5S.getFourCC()) return Format.BC5S;
-		if (fourCC == Format.RGBG.getFourCC()) return Format.RGBG;
-		if (fourCC == Format.GRGB.getFourCC()) return Format.GRGB;
-		if (fourCC == Format.UYVY.getFourCC()) return Format.UYVY;
-		if (fourCC == Format.YUY2.getFourCC()) return Format.YUY2;
-		if (fourCC == Format.DX10.getFourCC()) return Format.DX10;
-		if (!isCompressed()) return Format.UNCOMPRESSED;
+		if (!isCompressed()){
+			List<FormatItem> list = new ArrayList<FormatItem>();
+			if (isLuminance()){
+				if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
+				if (rMask != 0) list.add(new FormatItem("L", rMask, rBits));
+			} else {
+				if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
+				if (rMask != 0) list.add(new FormatItem("R", rMask, rBits));
+				if (gMask != 0) list.add(new FormatItem("G", gMask, gBits));
+				if (bMask != 0) list.add(new FormatItem("B", bMask, bBits));
+			}
+			Collections.sort(list);
+			String s = "";
+			for (FormatItem item : list){
+				s = s + item.toString();
+			}
+			Format.UNCOMPRESSED.setName(rgbBitCount+"bit-"+s);
+			return Format.UNCOMPRESSED;
+		} else {
+			if (isDXT1()) return Format.DXT1;
+			if (isDXT2()) return Format.DXT2;
+			if (isDXT3()) return Format.DXT3;
+			if (isDXT4()) return Format.DXT4;
+			if (isDXT5()) return Format.DXT5;
+			if (isATI1()) return Format.ATI1;
+			if (isATI2()) return Format.ATI2;
+			if (fourCC == Format.BC4U.getFourCC()) return Format.BC4U;
+			if (fourCC == Format.BC4S.getFourCC()) return Format.BC4S;
+			if (fourCC == Format.BC5S.getFourCC()) return Format.BC5S;
+			if (fourCC == Format.RGBG.getFourCC()) return Format.RGBG;
+			if (fourCC == Format.GRGB.getFourCC()) return Format.GRGB;
+			if (fourCC == Format.UYVY.getFourCC()) return Format.UYVY;
+			if (fourCC == Format.YUY2.getFourCC()) return Format.YUY2;
+			if (fourCC == Format.DX10.getFourCC()) return Format.DX10;
+		}
 		return Format.NOT_DDS;
+	}
+	
+	private static class FormatItem implements Comparable<FormatItem>{
+
+		private String name;
+		private Long mask;
+		private long bits;
+
+		
+		public FormatItem(String name, long mask, long bits) {
+			this.name = name;
+			this.mask = mask;
+			this.bits = bits;
+		}
+		
+		@Override
+		public String toString(){
+			return name+bits;
+		}
+		
+		@Override
+		public int compareTo(FormatItem o) {
+			return o.mask.compareTo(mask);
+		}
+		
 	}
 }

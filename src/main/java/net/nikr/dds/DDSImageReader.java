@@ -276,6 +276,7 @@ public class DDSImageReader extends ImageReader {
 
 			for (srcY = 0; srcY < height; srcY++) {
 				// Decode the next row from the DDS file.
+				// TODO Can be moved down past the continue/breaks...
 				ddsLineReader.decodeLine(bytes, ddsHeader, banks, width, srcY);
 
 				// Reject rows that lie outside the source region, or which are
@@ -326,6 +327,12 @@ public class DDSImageReader extends ImageReader {
 		}
 		//magic
 		return dst;
+	}
+
+	@Override
+	public String getFormatName() throws IOException {
+		readHeader();
+		return super.getFormatName()+ " ("+ddsHeader.getPixelFormat().getFormat().getName()+")";
 	}
 
 	private void checkIndex(int imageIndex) throws IllegalArgumentException {

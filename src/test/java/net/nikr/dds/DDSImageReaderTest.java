@@ -212,24 +212,31 @@ public class DDSImageReaderTest {
 	 */
 	@Test
 	public void testGetStreamMetadata() {
-		//TODO no meta data returned...
 		System.out.println("getStreamMetadata");
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		IIOMetadata result = instance.getStreamMetadata();
-		assertNull(result);
+		for (int i = 0; i < params.length; i++){
+			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
+				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+				instance.setInput( getInput(i) );
+				IIOMetadata result = instance.getStreamMetadata();
+				assertNull(result); //TODO no meta data returned...
+			}
+		}
 	}
 
 	/**
 	 * Test of getImageMetadata method, of class DDSImageReader.
 	 */
 	@Test
-	public void testGetImageMetadata() {
-		//TODO no meta data returned...
+	public void testGetImageMetadata() throws IOException {
 		System.out.println("getImageMetadata");
-		int imageIndex = 0;
-		DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-		IIOMetadata result = instance.getImageMetadata(imageIndex);
-		assertNull(result);
+		for (int i = 0; i < params.length; i++){
+			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
+				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+				instance.setInput( getInput(i) );
+				IIOMetadata result = instance.getImageMetadata(imageIndex);
+				assertNull(result); //TODO no meta data returned...
+			}
+		}
 	}
 
 	/**
