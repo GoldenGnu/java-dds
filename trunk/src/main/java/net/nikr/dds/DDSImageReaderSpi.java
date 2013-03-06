@@ -68,13 +68,18 @@ public class DDSImageReaderSpi extends ImageReaderSpi {
 		ImageInputStream stream = (ImageInputStream) source;
 		stream.reset();
 		stream.mark();
-		stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
-		int magic = stream.readInt();
-		if (magic != MAGIC) return false;
-		int size = stream.readInt();
-		if (size != 124) return false;
-		stream.reset();
-		return true;
+		final ByteOrder order = stream.getByteOrder();
+		try {
+			stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+			int magic = stream.readInt();
+			if (magic != MAGIC) return false;
+			int size = stream.readInt();
+			if (size != 124) return false;
+			stream.reset();
+			return true;
+		} finally {
+			stream.setByteOrder(order);
+		}
 	}
 
 	@Override
