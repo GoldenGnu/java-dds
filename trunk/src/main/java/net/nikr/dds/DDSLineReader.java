@@ -38,12 +38,13 @@ public class DDSLineReader {
 	private static final int BANK_GREEN = 1;
 	private static final int BANK_BLUE = 2;
 	private static final int BANK_ALPHA = 3;
-	
-	private static byte[][][] linesColor;
-	private static int lineNumber = 0;
+
 	private static final int LINES_PER_READ = 4;
 	private static final int COLORS_PER_READ = 4;
 	
+	private byte[][][] linesColor;
+	private int lineNumber = 0;
+
 	public DDSLineReader(){
 		lineNumber = 0;
 	}

@@ -32,7 +32,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
@@ -278,7 +280,22 @@ public class DDSImageReaderTest {
 			}
 		}
 	}
-	
+
+	@Test
+	public void testThreads() throws Exception {
+		System.out.println("Threads");
+		List<ThreadTester> threads = new ArrayList<ThreadTester>();
+		for (int i = 0; i < 8; i++) {
+			ThreadTester thread = new ThreadTester();
+			threads.add(thread);
+			thread.start();
+		}
+		for (ThreadTester thread : threads) {
+			thread.join();
+			assertFalse("Thread test failed", thread.isFailed());
+		}	
+	}
+
 	private Object getInput(int i){
 		Object input = null;
 		File file = new File(params[i].getFilename());
@@ -316,6 +333,27 @@ public class DDSImageReaderTest {
 		}
 		 */
 		return image;
+	}
+
+	private class ThreadTester extends Thread{
+
+		private boolean failed = false;;
+
+		@Override
+		public void run() {
+			for (TestParams param : params){
+				try {
+					System.out.println(param.getName());
+					ImageIO.read(new File(param.getFilename()));
+				} catch (Exception ex) {
+					failed = true;
+				}
+			}
+		}
+
+		public boolean isFailed() {
+			return failed;
+		}
 	}
 	
 	private class TestParams{
