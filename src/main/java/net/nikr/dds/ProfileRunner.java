@@ -44,7 +44,7 @@ public class ProfileRunner {
 
 	public ProfileRunner(String[] args) {
 		List<String> argsList = Arrays.asList(args);
-		if (argsList.contains("-24bit")) x100("src\\test\\resources\\net\\nikr\\dds\\gimp\\rgb8.dds");
+		if (argsList.contains("-24bit")) x100("src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator + "gimp" + File.separator + "rgb8.dds");
 		if (argsList.contains("-all")) all();
 	}
 	
@@ -66,8 +66,8 @@ public class ProfileRunner {
 	
 	private void all(){
 		List<File> files = new ArrayList<File>();
-		files.addAll(getDirFiles("src\\test\\resources\\net\\nikr\\dds\\"));
-		files.addAll(getDirFiles("src\\test\\resources\\net\\nikr\\dds\\gimp\\"));
+		files.addAll(getDirFiles("src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator));
+		files.addAll(getDirFiles("src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator + "gimp" + File.separator));
 		for (File file : files){
 			System.out.println(file.getName());
 			BufferedImage image = loadFile(file, 0);
