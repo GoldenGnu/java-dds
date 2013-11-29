@@ -357,7 +357,7 @@ public class DDSImageReaderTest {
 	}
 	
 	private class TestParams{
-		private final String dir = "src\\test\\resources\\net\\nikr\\dds\\";
+		private final String dir = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator;
 		private String filename;
 		private int mipMaps;
 		private int width;
