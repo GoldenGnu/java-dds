@@ -75,6 +75,8 @@ public class DDSImageReaderTest {
 		new TestParams("test_image-bc3.dds", 9, 256, 256),	//DXT5 - OK
 		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI1N - OK?
 		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI2N - OK?
+		new TestParams("test_mipmap1.dds", 1, 256, 256),	//
+		new TestParams("test_mipmap2.dds", 9, 256, 256),	//
 		
 		new TestParams("gimp" + File.separator + "a8.dds", 9, 256, 256),				//NONE A8 - OK
 		new TestParams("gimp" + File.separator + "abgr8.dds", 9, 256, 256),				//NONE ABGR8 - OK
