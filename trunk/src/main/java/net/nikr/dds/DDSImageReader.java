@@ -80,7 +80,12 @@ public class DDSImageReader extends ImageReader {
 	@Override
 	public int getNumImages(boolean allowSearch) throws IIOException {
 		readHeader();
-		return (int)ddsHeader.getMipMapCount();
+		long mipMapCount = ddsHeader.getMipMapCount();
+		if (mipMapCount <= 0) {
+			return 1; //Minimum one image inside (Also when the mapmap flag is not set)
+		} else {
+			return (int)mipMapCount;
+		}
 	}
 
 	@Override
