@@ -45,11 +45,14 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
@@ -445,6 +448,17 @@ public class Viewer{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if (ACTION_OPEN.equals(e.getActionCommand())){
+				File dir;
+				try {
+					dir = new File(Viewer.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+					dir = new File(dir.getAbsolutePath() + File.separator + "test-classes\\net\\nikr\\dds");
+					System.out.println(dir.getAbsolutePath());
+					if (dir.exists()) {
+						jFileChooser.setCurrentDirectory(dir);
+					}
+				} catch (URISyntaxException ex) {
+					
+				}
 				int returnVal = jFileChooser.showOpenDialog(jFrame);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					File file = jFileChooser.getSelectedFile();

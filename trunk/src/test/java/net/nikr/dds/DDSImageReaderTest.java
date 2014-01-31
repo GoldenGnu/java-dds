@@ -52,7 +52,7 @@ import static org.junit.Assert.*;
 
 
 public class DDSImageReaderTest {
-	
+
 	private final TestParams[] params = {
 		new TestParams("acids.dds", 8, 128, 128),			//DXT1 (With 8 mipMaps)
 		new TestParams("ATI1N.dds", 1, 256, 256),			//ATI1N - OK?
@@ -77,7 +77,14 @@ public class DDSImageReaderTest {
 		new TestParams("test_image-bc4.dds", 1, 256, 256),	//ATI2N - OK?
 		new TestParams("test_mipmap1.dds", 1, 256, 256),	//
 		new TestParams("test_mipmap2.dds", 9, 256, 256),	//
-		
+
+		new TestParams("25x25_plain.dds", 5, 25, 25),	//"bad size" - Uncompressed
+		new TestParams("25x25_dxt1.dds", 5, 25, 25),	//"bad size" - DXT1
+		new TestParams("25x25_dxt3.dds", 5, 25, 25),	//"bad size" - DXT2
+		new TestParams("25x25_dxt5.dds", 5, 25, 25),	//"bad size" - DXT5
+		new TestParams("25x25_ati1.dds", 5, 25, 25),	//"bad size" - ATI1
+		new TestParams("25x25_ati2.dds", 5, 25, 25),	//"bad size" - ATI2
+
 		new TestParams("gimp" + File.separator + "a8.dds", 9, 256, 256),				//NONE A8 - OK
 		new TestParams("gimp" + File.separator + "abgr8.dds", 9, 256, 256),				//NONE ABGR8 - OK
 		new TestParams("gimp" + File.separator + "aexp.dds", 9, 256, 256),				//??? - OK
@@ -108,24 +115,18 @@ public class DDSImageReaderTest {
 		new TestParams("gimp" + File.separator + "ycocg_dxt5.dds", 9, 256, 256),		//DXT5 (YCoCg)
 		new TestParams("gimp" + File.separator + "ycocg_scaled_dxt5.dds", 9, 256, 256),	//DXT5 (YCoCg scaled)
 	};
-    
-	
+
 	@BeforeClass
-	public static void setUpClass() throws Exception {
-	}
+	public static void setUpClass() { }
 
 	@AfterClass
-	public static void tearDownClass() throws Exception {
-	}
-	
-	@Before
-	public void setUp() {
-	}
-	
-	@After
-	public void tearDown() {
-	}
+	public static void tearDownClass() { }
 
+	@Before
+	public void setUp() { }
+
+	@After
+	public void tearDown() { }
 
 	/**
 	 * Test of setInput method, of class DDSImageReader.
@@ -145,9 +146,10 @@ public class DDSImageReaderTest {
 
 	/**
 	 * Test of getNumImages method, of class DDSImageReader.
+	 * @throws javax.imageio.IIOException
 	 */
 	@Test
-	public void testGetNumImages() throws Exception {
+	public void testGetNumImages() throws IIOException {
 		System.out.println("getNumImages");
 		for (int i = 0; i < params.length; i++){
 			boolean allowSearch = false;
@@ -160,9 +162,10 @@ public class DDSImageReaderTest {
 
 	/**
 	 * Test of getWidth method, of class DDSImageReader.
+	 * @throws javax.imageio.IIOException
 	 */
 	@Test
-	public void testGetWidth() throws Exception {
+	public void testGetWidth() throws IIOException {
 		System.out.println("getWidth");
 		for (int i = 0; i < params.length; i++){
 			int width = params[i].getWidth();
@@ -178,9 +181,10 @@ public class DDSImageReaderTest {
 
 	/**
 	 * Test of getHeight method, of class DDSImageReader.
+	 * @throws javax.imageio.IIOException
 	 */
 	@Test
-	public void testGetHeight() throws Exception {
+	public void testGetHeight() throws IIOException {
 		System.out.println("getHeight");
 		for (int i = 0; i < params.length; i++){
 			int height = params[i].getHeight();
@@ -196,9 +200,10 @@ public class DDSImageReaderTest {
 
 	/**
 	 * Test of getImageTypes method, of class DDSImageReader.
+	 * @throws javax.imageio.IIOException
 	 */
 	@Test
-	public void testGetImageTypes() throws Exception {
+	public void testGetImageTypes() throws IIOException {
 		System.out.println("getImageTypes");
 		for (int i = 0; i < params.length; i++){
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
@@ -231,7 +236,7 @@ public class DDSImageReaderTest {
 	 * Test of getImageMetadata method, of class DDSImageReader.
 	 */
 	@Test
-	public void testGetImageMetadata() throws IOException {
+	public void testGetImageMetadata() {
 		System.out.println("getImageMetadata");
 		for (int i = 0; i < params.length; i++){
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
@@ -245,41 +250,31 @@ public class DDSImageReaderTest {
 
 	/**
 	 * Test of read method, of class DDSImageReader.
+	 * @throws java.io.IOException
 	 */
 	@Test
 	public void testRead() throws IOException {
 		System.out.println("read");
 		for (int i = 0; i < params.length; i++){
-			System.out.println(params[i].getName());
 			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
 				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
 				instance.setInput( getInput(i) );
 				BufferedImage result;
-				try {
-					result = instance.read(imageIndex);
-					assertNotNull(result);
-				} catch (Exception ex) {
-					//fail("Failed to read imageIndex "+imageIndex+" from "+params[i].getName());
-					throw new IIOException("Failed to read imageIndex "+imageIndex+" from "+params[i].getName(), ex);
-				}
-				
+				result = instance.read(imageIndex);
+				assertNotNull(result);
 			}
 		}
 	}
 	
 	/**
 	 * Test of ImageIO
+	 * @throws java.io.IOException
 	 */
 	@Test
-	public void testImageIO() throws Exception {
+	public void testImageIO() throws IOException {
 		System.out.println("ImageIO");
 		for (TestParams param : params){
-			try {
-				System.out.println(param.getName());
-				ImageIO.read(new File(param.getFilename()));
-			} catch (IOException ex) {
-				fail("testImageIO -> Fail for file: "+param.getName()+" -> "+ex.getMessage());
-			}
+			ImageIO.read(new File(param.getFilename()));
 		}
 	}
 
@@ -311,29 +306,16 @@ public class DDSImageReaderTest {
 		return input;
 	}
 	
-	private BufferedImage getImage(int i){
-		BufferedImage image = null;
-		try {
-			ImageInputStream iis = ImageIO.createImageInputStream(new File(params[i].getFilename()));
-			Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix ("dds");
-			ImageReader reader = (ImageReader) iter.next();
-			reader.setInput (iis, true);
-			ImageReadParam irp = reader.getDefaultReadParam ();
-			//image = reader.read (0, irp);
-			image = reader.read (0);
-			// Cleanup.
-			reader.dispose ();
-		} catch (IOException ex) {
-			
-		}
-		
-		/*
-		try {
-			image = ImageIO.read(new File(testdir+testfile));
-		} catch (IOException ex) {
-			
-		}
-		 */
+	private BufferedImage getImage(int i) throws IOException{
+		ImageInputStream iis = ImageIO.createImageInputStream(new File(params[i].getFilename()));
+		Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix ("dds");
+		ImageReader reader = (ImageReader) iter.next();
+		reader.setInput (iis, true);
+		ImageReadParam irp = reader.getDefaultReadParam ();
+		//image = reader.read (0, irp);
+		BufferedImage image = reader.read (0);
+		// Cleanup.
+		reader.dispose ();
 		return image;
 	}
 
@@ -345,9 +327,8 @@ public class DDSImageReaderTest {
 		public void run() {
 			for (TestParams param : params){
 				try {
-					System.out.println(param.getName());
 					ImageIO.read(new File(param.getFilename()));
-				} catch (Exception ex) {
+				} catch (IOException ex) {
 					failed = true;
 				}
 			}
@@ -360,10 +341,10 @@ public class DDSImageReaderTest {
 	
 	private class TestParams{
 		private final String dir = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator;
-		private String filename;
-		private int mipMaps;
-		private int width;
-		private int height;
+		private final String filename;
+		private final int mipMaps;
+		private final int width;
+		private final int height;
 
 		public TestParams(String filename, int mipMaps, int width, int height) {
 			this.filename = filename;
