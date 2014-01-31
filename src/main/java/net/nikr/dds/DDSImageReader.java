@@ -106,10 +106,9 @@ public class DDSImageReader extends ImageReader {
 	public Iterator<ImageTypeSpecifier> getImageTypes(int imageIndex) throws IIOException {
 		readHeader();
 		checkIndex(imageIndex);
-		ImageTypeSpecifier imageType = null;
 		java.util.List<ImageTypeSpecifier> l = new ArrayList<ImageTypeSpecifier>();
 
-		imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
+		ImageTypeSpecifier imageType = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
 
 		l.add(imageType);
 		return l.iterator();
@@ -139,12 +138,14 @@ public class DDSImageReader extends ImageReader {
 		long skipsBytes = 0;
 		for (int i = 0; i < imageIndex; i++){
 			if (ddsHeader.getPixelFormat().isCompressed()){
+				int fixedHeight = ddsLineReader.fixSize((int)ddsHeader.getHeight(i));
+				int fixedWidth = ddsLineReader.fixSize((int)ddsHeader.getWidth(i));
 				if (ddsHeader.getPixelFormat().isDXT1() || ddsHeader.getPixelFormat().isATI1()){ //DXT1 & ATI (8 bytes)
-					long bytes = (8 * (Math.max(1, (ddsHeader.getHeight(i)/ 4) * Math.max(1, ddsHeader.getWidth(i)/ 4))));
+					long bytes = (8 * (Math.max(1, (fixedHeight / 4) * Math.max(1, fixedWidth/ 4))));
 					bytes = Math.max(bytes, 8);
 					skipsBytes = skipsBytes + bytes;
 				} else { //DXT3 & DXT5 & ATI2 (16 bytes)
-					long bytes = (16 * (Math.max(1, (ddsHeader.getHeight(i)/ 4) * Math.max(1, ddsHeader.getWidth(i)/ 4))));
+					long bytes = (16 * (Math.max(1, (fixedHeight / 4) * Math.max(1, fixedWidth/ 4))));
 					bytes = Math.max(bytes, 16);
 					skipsBytes = skipsBytes + bytes;
 				}
@@ -153,7 +154,9 @@ public class DDSImageReader extends ImageReader {
 				skipsBytes = skipsBytes + bytes;
 			}
 		}
-		if (skipsBytes > 0) stream.skipBytes(skipsBytes);
+		if (skipsBytes > 0) {
+			stream.skipBytes(skipsBytes);
+		}
 		int width = (int)ddsHeader.getWidth(imageIndex);
 		int height = (int)ddsHeader.getHeight(imageIndex);
 		// Calculate and return a Rectangle that identifies the region of the
