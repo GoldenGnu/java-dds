@@ -4,7 +4,7 @@
 	<groupId>net.nikr</groupId>
 	<artifactId>dds</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<name>Java DDS ImageIO Plugin</name>
 	<url>http://code.google.com/p/java-dds/</url>
 	<issueManagement>
