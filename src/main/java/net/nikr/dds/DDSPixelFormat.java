@@ -64,7 +64,7 @@ public class DDSPixelFormat {
 		;
 
 		private String name;
-		private int fourCC;
+		private final int fourCC;
 
 		private Format(String name) {
 			this.name = name;
@@ -79,7 +79,7 @@ public class DDSPixelFormat {
 			return name;
 		}
 		
-		private void setName(String name){
+		public void setName(String name){
 			this.name = name;
 		}
 		
@@ -92,40 +92,33 @@ public class DDSPixelFormat {
 		}
 	}
 	
-	private int size;
-    private long flags;
-    private long fourCC;
-    private long rgbBitCount;
-    private long rMask;
-	private long gMask;
-	private long bMask;
-    private long aMask;
-    private long rMaskFixed;
-	private long gMaskFixed;
-	private long bMaskFixed;
-    private long aMaskFixed;
-    private int rShift;
-	private int gShift;
-	private int bShift;
-    private int aShift;
-    private int rBits;
-	private int gBits;
-	private int bBits;
-    private int aBits;
-	private Format format;
-	/**
-	 * Creates a new instance of DDSPixelFormat
-	 */
+	private final int size;
+    private final long flags;
+    private final long fourCC;
+    private final long rgbBitCount;
+    private final long rMask;
+	private final long gMask;
+	private final long bMask;
+    private final long aMask;
+    private final long rMaskFixed;
+	private final long gMaskFixed;
+	private final long bMaskFixed;
+    private final long aMaskFixed;
+    private final int rShift;
+	private final int gShift;
+	private final int bShift;
+    private final int aShift;
+    private final int rBits;
+	private final int gBits;
+	private final int bBits;
+    private final int aBits;
+	private final Format format;
+
 	public DDSPixelFormat(int size, long flags, long fourCC, long rgbBitCount, long rMask, long gMask, long bMask, long aMask) {
 		this.size = size;
 		this.flags = flags;
 		this.fourCC = fourCC;
 		this.rgbBitCount = rgbBitCount;
-		this.rMask = rMask;
-		this.gMask = gMask;
-		this.bMask = bMask;
-		this.aMask = aMask;
-		
 		this.rMask = rMask;
 		this.gMask = gMask;
 		this.bMask = bMask;
@@ -212,31 +205,6 @@ public class DDSPixelFormat {
 	public Format getFormat(){
 		return format;
 	}
-	public boolean isCompressed(){
-		return ((flags & FOURCC) != 0);
-	}
-	public boolean isDXT1(){
-		return (fourCC == Format.DXT1.getFourCC());
-	}
-	public boolean isDXT2(){
-		return (fourCC == Format.DXT2.getFourCC());
-	}
-	public boolean isDXT3(){
-		return (fourCC == Format.DXT3.getFourCC());
-	}
-	public boolean isDXT4(){
-		return (fourCC == Format.DXT4.getFourCC());
-	}
-	public boolean isDXT5(){
-		return (fourCC == Format.DXT5.getFourCC());
-	}
-	public boolean isATI1(){
-		return (fourCC == Format.ATI1.getFourCC());
-	}
-	public boolean isATI2(){
-		return (fourCC == Format.ATI2.getFourCC());
-	}
-	
 	public boolean isAlphaPixels(){
 		return ((flags & ALPHAPIXELS) != 0);
 	}
@@ -305,7 +273,7 @@ public class DDSPixelFormat {
 	}
 	
 	private Format calcFormat(){
-		if (!isCompressed()){
+		if ((flags & FOURCC) == 0){
 			List<FormatItem> list = new ArrayList<FormatItem>();
 			if (isLuminance()){
 				if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
@@ -324,30 +292,20 @@ public class DDSPixelFormat {
 			Format.UNCOMPRESSED.setName(rgbBitCount+"bit-"+s);
 			return Format.UNCOMPRESSED;
 		} else {
-			if (isDXT1()) return Format.DXT1;
-			if (isDXT2()) return Format.DXT2;
-			if (isDXT3()) return Format.DXT3;
-			if (isDXT4()) return Format.DXT4;
-			if (isDXT5()) return Format.DXT5;
-			if (isATI1()) return Format.ATI1;
-			if (isATI2()) return Format.ATI2;
-			if (fourCC == Format.BC4U.getFourCC()) return Format.BC4U;
-			if (fourCC == Format.BC4S.getFourCC()) return Format.BC4S;
-			if (fourCC == Format.BC5S.getFourCC()) return Format.BC5S;
-			if (fourCC == Format.RGBG.getFourCC()) return Format.RGBG;
-			if (fourCC == Format.GRGB.getFourCC()) return Format.GRGB;
-			if (fourCC == Format.UYVY.getFourCC()) return Format.UYVY;
-			if (fourCC == Format.YUY2.getFourCC()) return Format.YUY2;
-			if (fourCC == Format.DX10.getFourCC()) return Format.DX10;
+			for (Format formatSearch : Format.values()) {
+				if (fourCC == formatSearch.getFourCC()) {
+					return formatSearch;
+				}
+			}
 		}
 		return Format.NOT_DDS;
 	}
 	
 	private static class FormatItem implements Comparable<FormatItem>{
 
-		private String name;
-		private Long mask;
-		private long bits;
+		private final String name;
+		private final Long mask;
+		private final long bits;
 
 		
 		public FormatItem(String name, long mask, long bits) {

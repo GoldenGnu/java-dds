@@ -83,10 +83,9 @@ public class DDSLineReader {
 	/**
 	 * Fix size to be compatible with "bad size" ex.: 25x25 (instead of 24x24)
 	 * @param size width or height
-	 * @return fixed width or height
-	 * @throws IOException 
+	 * @return fixed width or height 
 	 */
-	public int fixSize(int size) throws IOException {
+	public int fixSize(int size) {
 		while(size % 4 != 0) {
 			size++;
 		}
@@ -94,7 +93,7 @@ public class DDSLineReader {
 	}
 
 	public void decodeLine(byte[] bytes, DDSHeader ddsHeader, byte [][] banks, int width, int y) throws IOException{
-		switch (ddsHeader.getPixelFormat().getFormat()){
+		switch (ddsHeader.getFormat()){
 			case UNCOMPRESSED:
 				decodeUncompressed(bytes, ddsHeader, banks, width, y);
 				break;
@@ -110,7 +109,7 @@ public class DDSLineReader {
 			case NOT_DDS:
 				throw new IOException("Not a supported format!");
 			default:
-				throw new IOException(ddsHeader.getPixelFormat().getFormat().getName()+" is not a supported format!");
+				throw new IOException(ddsHeader.getFormat().getName()+" is not a supported format!");
 		}
 	}
 
@@ -182,12 +181,12 @@ public class DDSLineReader {
 			//System.out.println("Read line: " + y);
 			int fixedWidth = fixSize(width); //Fix "Bad size"
 			linesColor = new byte[LINES_PER_READ][(int)Math.max(fixedWidth, 8)][COLORS_PER_READ];
-			if (ddsHeader.getPixelFormat().isDXT3()){
+			if (ddsHeader.getFormat() == Format.DXT3){
 				for (int x = 0; x < fixedWidth; x = x + 4) {
 					decodeDXT3AlphaBlock(bytes, 16, 0, x, (16 * fixedWidth / 4 * y / 4));
 					decodeColorBlock(bytes, 16, 8, x, (16 * fixedWidth / 4 * y / 4), false);
 				}
-			} else if (ddsHeader.getPixelFormat().isDXT5()){
+			} else if (ddsHeader.getFormat() == Format.DXT5){
 				for (int x = 0; x < fixedWidth; x = x + 4) {
 					decodeAtiAndDxt5AlphaBlock(bytes, 16, 0, x, (16 * fixedWidth / 4 * y / 4), BANK_ALPHA);
 					decodeColorBlock(bytes, 16, 8, x, (16 * fixedWidth / 4 * y / 4), false);
@@ -215,7 +214,7 @@ public class DDSLineReader {
 			//System.out.println("Read line:  " +y);
 			int fixedWidth = fixSize(width); //Fix "Bad size"
 			linesColor = new byte[LINES_PER_READ][(int)Math.max(fixedWidth, 8)][COLORS_PER_READ];
-			if (ddsHeader.getPixelFormat().isATI1()){
+			if (ddsHeader.getFormat() == Format.ATI1){
 				for (int x = 0; x < fixedWidth; x = x + 4) {
 					decodeAtiAndDxt5AlphaBlock(bytes,8 , 0, x, (8 * fixedWidth / 4 * y / 4), BANK_RED);
 					for (int yi = 0; yi < 4 ; yi++){
@@ -227,7 +226,7 @@ public class DDSLineReader {
 					}
 				}
 			}
-			if (ddsHeader.getPixelFormat().isATI2()){
+			if (ddsHeader.getFormat() == Format.ATI2){
 				for (int x = 0; x < fixedWidth; x = x + 4) {
 					decodeAtiAndDxt5AlphaBlock(bytes, 16, 0, x, (16 * fixedWidth / 4 * y / 4), BANK_GREEN);
 					decodeAtiAndDxt5AlphaBlock(bytes, 16, 8, x, (16 * fixedWidth / 4 * y / 4), BANK_RED);

@@ -45,6 +45,7 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
+import net.nikr.dds.DDSPixelFormat.Format;
 
 public class DDSImageReader extends ImageReader {
 
@@ -81,11 +82,11 @@ public class DDSImageReader extends ImageReader {
 	public int getNumImages(boolean allowSearch) throws IIOException {
 		readHeader();
 		long mipMapCount = ddsHeader.getMipMapCount();
-		if (mipMapCount <= 0) {
-			return 1; //Minimum one image inside (Also when the mapmap flag is not set)
-		} else {
-			return (int)mipMapCount;
+		//DX10
+		if (ddsHeader.getHeaderDX10() != null) {
+			mipMapCount = mipMapCount * ddsHeader.getHeaderDX10().getArraySize();
 		}
+		return (int)mipMapCount;
 	}
 
 	@Override
@@ -137,22 +138,7 @@ public class DDSImageReader extends ImageReader {
 		//Skips bytes to the selected imageIndex (MipMap)
 		long skipsBytes = 0;
 		for (int i = 0; i < imageIndex; i++){
-			if (ddsHeader.getPixelFormat().isCompressed()){
-				int fixedHeight = ddsLineReader.fixSize((int)ddsHeader.getHeight(i));
-				int fixedWidth = ddsLineReader.fixSize((int)ddsHeader.getWidth(i));
-				if (ddsHeader.getPixelFormat().isDXT1() || ddsHeader.getPixelFormat().isATI1()){ //DXT1 & ATI (8 bytes)
-					long bytes = (8 * (Math.max(1, (fixedHeight / 4) * Math.max(1, fixedWidth/ 4))));
-					bytes = Math.max(bytes, 8);
-					skipsBytes = skipsBytes + bytes;
-				} else { //DXT3 & DXT5 & ATI2 (16 bytes)
-					long bytes = (16 * (Math.max(1, (fixedHeight / 4) * Math.max(1, fixedWidth/ 4))));
-					bytes = Math.max(bytes, 16);
-					skipsBytes = skipsBytes + bytes;
-				}
-			} else { //Uncompressed
-				long bytes =  (ddsHeader.getPixelFormat().getRgbBitCount() / 8) * ddsHeader.getHeight(i) * ddsHeader.getWidth(i);
-				skipsBytes = skipsBytes + bytes;
-			}
+			skipsBytes = skipsBytes + skipImage(ddsLineReader, i);
 		}
 		if (skipsBytes > 0) {
 			stream.skipBytes(skipsBytes);
@@ -276,7 +262,7 @@ public class DDSImageReader extends ImageReader {
 		}
 
 		//Read all bytes for the selected imageIndex (More Memory, Less Time)
-		byte[] bytes = ddsLineReader.readAll(stream, ddsHeader.getPixelFormat().getFormat(), (int)ddsHeader.getPixelFormat().getRgbBitCount(), width, height);
+		byte[] bytes = ddsLineReader.readAll(stream, ddsHeader.getFormat(), (int)ddsHeader.getPixelFormat().getRgbBitCount(), width, height);
 		
 		int srcY = 0;
 		try {
@@ -340,11 +326,36 @@ public class DDSImageReader extends ImageReader {
 	@Override
 	public String getFormatName() throws IOException {
 		readHeader();
-		return super.getFormatName()+ " ("+ddsHeader.getPixelFormat().getFormat().getName()+")";
+		return super.getFormatName()+ " ("+ddsHeader.getFormat().getName()+")";
+	}
+
+	private long skipImage(DDSLineReader ddsLineReader, int index) {
+		long skipsBytes = 0;
+		if (ddsHeader.getFormat() != Format.UNCOMPRESSED){
+			int fixedHeight = ddsLineReader.fixSize((int)ddsHeader.getHeight(index));
+			int fixedWidth = ddsLineReader.fixSize((int)ddsHeader.getWidth(index));
+			if (ddsHeader.getFormat() == Format.DXT1 || ddsHeader.getFormat() == Format.ATI1){ //DXT1 & ATI (8 bytes)
+				long bytes = (8 * (Math.max(1, (fixedHeight / 4) * Math.max(1, fixedWidth/ 4))));
+				bytes = Math.max(bytes, 8);
+				skipsBytes = bytes;
+			} else { //DXT3 & DXT5 & ATI2 (16 bytes)
+				long bytes = (16 * (Math.max(1, (fixedHeight / 4) * Math.max(1, fixedWidth/ 4))));
+				bytes = Math.max(bytes, 16);
+				skipsBytes = bytes;
+			}
+		} else { //Uncompressed
+			long bytes =  (ddsHeader.getPixelFormat().getRgbBitCount() / 8) * ddsHeader.getHeight(index) * ddsHeader.getWidth(index);
+			skipsBytes = bytes;
+		}
+		return skipsBytes;
 	}
 
 	private void checkIndex(int imageIndex) throws IllegalArgumentException {
-		if (imageIndex > ddsHeader.getMipMapCount()) {
+		long mipMapCount = ddsHeader.getMipMapCount();
+		if (ddsHeader.getHeaderDX10() != null) {
+			mipMapCount = mipMapCount * ddsHeader.getHeaderDX10().getArraySize();
+		}
+		if (imageIndex > mipMapCount) {
 			throw new IllegalArgumentException("MipMap index not found");
 		}
 	}
@@ -384,7 +395,11 @@ public class DDSImageReader extends ImageReader {
 			long caps2 = stream.readInt() & 0xFFFFFFFFL;
 			long caps3 = stream.readInt() & 0xFFFFFFFFL;
 			long caps4 = stream.readInt() & 0xFFFFFFFFL;
-			ddsHeader = new DDSHeader(size, flags, height, width, linearSize, depth, mipMapCount, ddsPixelFormat, caps, caps2, caps3, caps4);
+			DDSHeaderDX10 ddsHeaderDX10 = null;
+			if (ddsPixelFormat.getFormat() == Format.DX10) {
+				ddsHeaderDX10 = readHeaderDX10();
+			}
+			ddsHeader = new DDSHeader(size, flags, height, width, linearSize, depth, mipMapCount, ddsPixelFormat, caps, caps2, caps3, caps4, ddsHeaderDX10);
 		} catch (IOException ex) {
 			throw new IIOException("Failed To Load Header: " + ex.getMessage());
 		}
@@ -405,5 +420,18 @@ public class DDSImageReader extends ImageReader {
 		DDSPixelFormat ddsPixelFormat = new DDSPixelFormat(size, flags, fourCC, rgbBitCount, rBitMask, gBitMask, bBitMask, aBitMask);
 		stream.readInt();
 		return ddsPixelFormat;
+	}
+
+	private DDSHeaderDX10 readHeaderDX10() throws IIOException {
+		try {
+			long dxgiFormat = stream.readInt() & 0xFFFFFFFFL;
+			long resourceDimension = stream.readInt() & 0xFFFFFFFFL;
+			long miscFlag = stream.readInt() & 0xFFFFFFFFL;
+			long arraySize = stream.readInt() & 0xFFFFFFFFL;
+			long miscFlags2 = stream.readInt() & 0xFFFFFFFFL;
+			return new DDSHeaderDX10(dxgiFormat, resourceDimension, miscFlag, arraySize, miscFlags2);
+		} catch (IOException ex) {
+			throw new IIOException("Failed to load DX10 header: " + ex.getMessage());
+		}
 	}
 }
