@@ -28,6 +28,8 @@
 
 package net.nikr.dds;
 
+import net.nikr.dds.DDSPixelFormat.Format;
+
 
 public class DDSHeader {
 	public static final int CAPS = 0x1;
@@ -52,26 +54,26 @@ public class DDSHeader {
 	public static final int CAPS2_CUBEMAP_NEGATIVEZ = 0x8000;
 	public static final int CAPS2_VOLUME = 0x200000;
 	
-	private long size;
-	private long flags;
-	private long height;
-	private long width;
-	private long pitchOrLinearSize;
-	private long depth;
-	private long mipMapCount;
-	private DDSPixelFormat ddsPixelFormat;
-	private long caps;
-    private long caps2;
-    private long caps3;
-    private long caps4;
-	
-	
-	public DDSHeader(long size, long flags, long height, long width, long linearSize, long depth, long mipMapCount, DDSPixelFormat ddsPixelFormat, long caps, long caps2, long caps3, long caps4) {
+	private final long size;
+	private final long flags;
+	private final long height;
+	private final long width;
+	private final long pitchOrLinearSize;
+	private final long depth;
+	private final long mipMapCount;
+	private final DDSPixelFormat ddsPixelFormat;
+	private final long caps;
+    private final long caps2;
+    private final long caps3;
+    private final long caps4;
+	private final DDSHeaderDX10 ddsHeaderDX10;
+
+	public DDSHeader(long size, long flags, long height, long width, long pitchOrLinearSize, long depth, long mipMapCount, DDSPixelFormat ddsPixelFormat, long caps, long caps2, long caps3, long caps4, DDSHeaderDX10 ddsHeaderDX10) {
 		this.size = size;
 		this.flags = flags;
 		this.height = height;
 		this.width = width;
-		this.pitchOrLinearSize = linearSize;
+		this.pitchOrLinearSize = pitchOrLinearSize;
 		this.depth = depth;
 		this.mipMapCount = mipMapCount;
 		this.ddsPixelFormat = ddsPixelFormat;
@@ -79,7 +81,17 @@ public class DDSHeader {
 		this.caps2 = caps2;
 		this.caps3 = caps3;
 		this.caps4 = caps4;
+		this.ddsHeaderDX10 = ddsHeaderDX10;
 	}
+
+	public Format getFormat() {
+		if (ddsHeaderDX10 != null) {
+			return ddsHeaderDX10.getFormat();
+		} else {
+			return ddsPixelFormat.getFormat();
+		}
+	}
+
 	public long getSize() {
 		return size;
 	}
@@ -87,10 +99,18 @@ public class DDSHeader {
 		return flags;
 	}
 	public long getHeight(int mipMap) {
-		return Math.max(height >> mipMap, 1);
+		int fixedMipMap = mipMap;
+		if (fixedMipMap >= getMipMapCount()) {
+			fixedMipMap = fixedMipMap - ((fixedMipMap / (int)getMipMapCount()) * (int)getMipMapCount());
+		}
+		return Math.max(height >> fixedMipMap, 1);
 	}
 	public long getWidth(int mipMap) {
-		return Math.max(width >> mipMap, 1);
+		int fixedMipMap = mipMap;
+		if (fixedMipMap >= getMipMapCount()) {
+			fixedMipMap = fixedMipMap - ((fixedMipMap / (int)getMipMapCount()) * (int)getMipMapCount());
+		}
+		return Math.max(width >> fixedMipMap, 1);
 	}
 	public long getPitchOrLinearSize() {
 		return pitchOrLinearSize;
@@ -99,7 +119,11 @@ public class DDSHeader {
 		return depth;
 	}
 	public long getMipMapCount() {
-		return mipMapCount;
+		if (mipMapCount <= 0) { //Minimum one image inside (Also when the mapmap flag is not set)
+			return 1;
+		} else {
+			return mipMapCount;
+		}
 	}
 	public void printValues(){
 		System.out.println("DDSHeader:");
@@ -140,5 +164,9 @@ public class DDSHeader {
 	}
 	public DDSPixelFormat getPixelFormat() {
 		return ddsPixelFormat;
+	}
+
+	public DDSHeaderDX10 getHeaderDX10() {
+		return ddsHeaderDX10;
 	}
 }

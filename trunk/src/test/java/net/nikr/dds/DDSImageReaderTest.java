@@ -33,16 +33,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.stream.FileImageInputStream;
-import javax.imageio.stream.ImageInputStream;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -78,31 +74,53 @@ public class DDSImageReaderTest {
 		new TestParams("test_mipmap1.dds", 1, 256, 256),	//
 		new TestParams("test_mipmap2.dds", 9, 256, 256),	//
 
-		new TestParams("25x25_plain.dds", 5, 25, 25),	//"bad size" - Uncompressed
+		new TestParams("25x25_ati1.dds", 5, 25, 25),	//"bad size" - ATI1
+		new TestParams("25x25_ati2.dds", 5, 25, 25),	//"bad size" - ATI2
 		new TestParams("25x25_dxt1.dds", 5, 25, 25),	//"bad size" - DXT1
 		new TestParams("25x25_dxt3.dds", 5, 25, 25),	//"bad size" - DXT2
 		new TestParams("25x25_dxt5.dds", 5, 25, 25),	//"bad size" - DXT5
-		new TestParams("25x25_ati1.dds", 5, 25, 25),	//"bad size" - ATI1
-		new TestParams("25x25_ati2.dds", 5, 25, 25),	//"bad size" - ATI2
+		new TestParams("25x25_plain.dds", 5, 25, 25),	//"bad size" - Uncompressed
+
+		new TestParams("dx10" + File.separator + "25x25_dxt1.dds", 5, 2, 25, 25),	//DX10 - DXT1
+		new TestParams("dx10" + File.separator + "25x25_dxt3.dds", 5, 2, 25, 25),	//DX10 - DXT2
+		new TestParams("dx10" + File.separator + "25x25_dxt5.dds", 5, 2, 25, 25),	//DX10 - DXT5
+		new TestParams("dx10" + File.separator + "25x25_rgb8.dds", 5, 2, 25, 25),	//DX10 - RGB8
+		new TestParams("dx10" + File.separator + "25x25_rgba8.dds", 5, 2, 25, 25),	//DX10 - RGBA8
+		new TestParams("dx10" + File.separator + "25x25_bgr8.dds", 5, 2, 25, 25),	//DX10 - BGR8
+		new TestParams("dx10" + File.separator + "25x25_abgr8.dds", 5, 2, 25, 25),	//DX10 - ABGR8
+		new TestParams("dx10" + File.separator + "25x25_r5g6b5.dds", 5, 2, 25, 25), //DX10 - R5G6B5
+		new TestParams("dx10" + File.separator + "25x25_rgba4.dds", 5, 2, 25, 25),	//DX10 - RGBA4
+		new TestParams("dx10" + File.separator + "25x25_rgb5a1.dds", 5, 2, 25, 25), //DX10 - RGB5A1
+		new TestParams("dx10" + File.separator + "25x25_rgb10a2.dds", 5, 2, 25, 25),//DX10 - RGB10A2
+		new TestParams("dx10" + File.separator + "25x25_r2g3b2.dds", 5, 2, 25, 25), //DX10 - R2G3B2
+		new TestParams("dx10" + File.separator + "25x25_a8.dds", 5, 2, 25, 25),		//DX10 - A8
+		new TestParams("dx10" + File.separator + "25x25_l8.dds", 5, 2, 25, 25),		//DX10 - L8
+		new TestParams("dx10" + File.separator + "25x25_l8a8.dds", 5, 2, 25, 25),	//DX10 - L8A8
+		new TestParams("dx10" + File.separator + "25x25_aexp.dds", 5, 2, 25, 25),	//DX10 - AEXP
+		new TestParams("dx10" + File.separator + "25x25_ycocg.dds", 5, 2, 25, 25),	//DX10 - YCOCG
+
+		new TestParams("dx10" + File.separator + "dds_dxt1.dds", 1, 4, 256, 256),	//DX10 - DXT1
+		new TestParams("dx10" + File.separator + "dds_dxt3.dds", 1, 4, 256, 256),	//DX10 - DXT2
+		new TestParams("dx10" + File.separator + "dds_dxt5.dds", 1, 4, 256, 256),	//DX10 - DXT5
+		new TestParams("dx10" + File.separator + "dds_plain.dds", 1, 4, 256, 256),	//DX10 - Uncompressed
 
 		new TestParams("gimp" + File.separator + "a8.dds", 9, 256, 256),				//NONE A8 - OK
 		new TestParams("gimp" + File.separator + "abgr8.dds", 9, 256, 256),				//NONE ABGR8 - OK
 		new TestParams("gimp" + File.separator + "aexp.dds", 9, 256, 256),				//??? - OK
 		new TestParams("gimp" + File.separator + "alpha_exponent_dxt5.dds", 9, 256, 256),//bc3/dxt5 (Alpha Exponent)
-		
+
 		new TestParams("gimp" + File.separator + "bc1.dds", 9, 256, 256),				//bc1/dxt1 - OK
 		new TestParams("gimp" + File.separator + "bc2.dds", 9, 256, 256),				//bc2/dxt3 - OK
 		new TestParams("gimp" + File.separator + "bc3.dds", 9, 256, 256),				//bc3/dxt5 - OK
 		new TestParams("gimp" + File.separator + "bc3n.dds", 9, 256, 256),				//bc3n/dxt5 - OK
 		new TestParams("gimp" + File.separator + "bc4.dds", 9, 256, 256),				//bc4/ati1 - OK
 		new TestParams("gimp" + File.separator + "bc5.dds", 9, 256, 256),				//bc5/ati2 - OK
-		
-		//FIXME can not be writen by GIMP
-		//new TestParams("gimp" + File.separator + "bgr8.dds", 9, 256, 256),				//NONE BGR8
-		
+
+		new TestParams("gimp" + File.separator + "bgr8.dds", 9, 256, 256),				//NONE BGR8
+
 		new TestParams("gimp" + File.separator + "l8.dds", 9, 256, 256),				//NONE L8 - OK
 		new TestParams("gimp" + File.separator + "l8a8.dds", 9, 256, 256),				//NONE L8A8 - OK
-		
+
 		new TestParams("gimp" + File.separator + "r3g3b2.dds", 9, 256, 256),			//NONE R3G3B2 - OK
 		new TestParams("gimp" + File.separator + "r5g6b5.dds", 9, 256, 256),			//NONE R5G6B5 - OK
 		new TestParams("gimp" + File.separator + "rgb5a1.dds", 9, 256, 256),			//NONE RGB5A1 - FAIL
@@ -110,7 +128,7 @@ public class DDSImageReaderTest {
 		new TestParams("gimp" + File.separator + "rgb10a2.dds", 9, 256, 256),			//NONE RGB10A2 - FAIL
 		new TestParams("gimp" + File.separator + "rgba4.dds", 9, 256, 256),				//NONE RGBA4 - OK
 		new TestParams("gimp" + File.separator + "rgba8.dds", 9, 256, 256),				//NONE RGBA8 - OK
-		
+
 		new TestParams("gimp" + File.separator + "ycocg.dds", 9, 256, 256),				//NONE YCoCg
 		new TestParams("gimp" + File.separator + "ycocg_dxt5.dds", 9, 256, 256),		//DXT5 (YCoCg)
 		new TestParams("gimp" + File.separator + "ycocg_scaled_dxt5.dds", 9, 256, 256),	//DXT5 (YCoCg scaled)
@@ -134,13 +152,13 @@ public class DDSImageReaderTest {
 	@Test
 	public void testSetInput() {
 		System.out.println("setInput");
-		for (int i = 0; i < params.length; i++){
-			Object input = getInput(i);
+		for (TestParams param : params){
+			Object input = getInput(param);
 			boolean seekForwardOnly = false;
 			boolean ignoreMetadata = false;
 			DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
 			instance.setInput(input, seekForwardOnly, ignoreMetadata);
-			assertEquals(input, instance.getInput());
+			assertEquals(param.getName(), input, instance.getInput());
 		}
 	}
 
@@ -151,12 +169,12 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetNumImages() throws IIOException {
 		System.out.println("getNumImages");
-		for (int i = 0; i < params.length; i++){
+		for (TestParams param : params){
 			boolean allowSearch = false;
 			DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-			instance.setInput( getInput(i) );
+			instance.setInput( getInput(param) );
 			int result = instance.getNumImages(allowSearch);
-			assertEquals(params[i].getMipMaps(), result);
+			assertEquals(param.getName(), param.getMipMaps() * param.getArraySize(), result);
 		}
 	}
 
@@ -167,14 +185,16 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetWidth() throws IIOException {
 		System.out.println("getWidth");
-		for (int i = 0; i < params.length; i++){
-			int width = params[i].getWidth();
-			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-				instance.setInput( getInput(i) );
-				int result = instance.getWidth(imageIndex);
-				assertEquals(result, width);
-				width = Math.max(width / 2, 1);
+		for (TestParams param : params){
+			for (int arraySize = 0; arraySize < param.getArraySize(); arraySize++){
+				int width = param.getWidth();
+				for (int imageIndex = 0; imageIndex < param.getMipMaps(); imageIndex++){
+					DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+					instance.setInput( getInput(param) );
+					int result = instance.getWidth(imageIndex + (param.getMipMaps() * arraySize));
+					assertEquals(param.getName(), result, width);
+					width = Math.max(width / 2, 1);
+				}
 			}
 		}
 	}
@@ -186,14 +206,16 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetHeight() throws IIOException {
 		System.out.println("getHeight");
-		for (int i = 0; i < params.length; i++){
-			int height = params[i].getHeight();
-			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-				instance.setInput( getInput(i) );
-				int result = instance.getHeight(imageIndex);
-				assertEquals(result, height);
-				height = height / 2;
+		for (TestParams param : params){
+			for (int arraySize = 0; arraySize < param.getArraySize(); arraySize++){
+				int height = param.getHeight();
+				for (int imageIndex = 0; imageIndex < param.getMipMaps(); imageIndex++){
+					DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+					instance.setInput( getInput(param) );
+					int result = instance.getHeight(imageIndex + (param.getMipMaps() * arraySize));
+					assertEquals(param.getName(), result, height);
+					height = height / 2;
+				}
 			}
 		}
 	}
@@ -205,13 +227,15 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetImageTypes() throws IIOException {
 		System.out.println("getImageTypes");
-		for (int i = 0; i < params.length; i++){
-			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-				instance.setInput( getInput(i) );
-				ImageTypeSpecifier expResult = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
-				ImageTypeSpecifier result = instance.getImageTypes(imageIndex).next();
-				assertEquals(expResult, result);
+		for (TestParams param : params){
+			for (int arraySize = 0; arraySize < param.getArraySize(); arraySize++){
+				for (int imageIndex = 0; imageIndex < param.getMipMaps(); imageIndex++){
+					DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+					instance.setInput( getInput(param) );
+					ImageTypeSpecifier expResult = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_4BYTE_ABGR);
+					ImageTypeSpecifier result = instance.getImageTypes(imageIndex + (param.getMipMaps() * arraySize)).next();
+					assertEquals(param.getName(), expResult, result);
+				}
 			}
 		}
 	}
@@ -222,13 +246,11 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetStreamMetadata() {
 		System.out.println("getStreamMetadata");
-		for (int i = 0; i < params.length; i++){
-			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-				instance.setInput( getInput(i) );
-				IIOMetadata result = instance.getStreamMetadata();
-				assertNull(result); //TODO no meta data returned...
-			}
+		for (TestParams param : params){
+			DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+			instance.setInput( getInput(param) );
+			IIOMetadata result = instance.getStreamMetadata();
+			assertNull(param.getName(), result); //TODO no meta data returned...
 		}
 	}
 
@@ -238,12 +260,14 @@ public class DDSImageReaderTest {
 	@Test
 	public void testGetImageMetadata() {
 		System.out.println("getImageMetadata");
-		for (int i = 0; i < params.length; i++){
-			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-				instance.setInput( getInput(i) );
-				IIOMetadata result = instance.getImageMetadata(imageIndex);
-				assertNull(result); //TODO no meta data returned...
+		for (TestParams param : params){
+			for (int arraySize = 0; arraySize < param.getArraySize(); arraySize++){
+				for (int imageIndex = 0; imageIndex < param.getMipMaps(); imageIndex++){
+					DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+					instance.setInput( getInput(param) );
+					IIOMetadata result = instance.getImageMetadata(imageIndex + (param.getMipMaps() * arraySize));
+					assertNull(param.getName(), result); //TODO no meta data returned...
+				}
 			}
 		}
 	}
@@ -255,13 +279,15 @@ public class DDSImageReaderTest {
 	@Test
 	public void testRead() throws IOException {
 		System.out.println("read");
-		for (int i = 0; i < params.length; i++){
-			for (int imageIndex = 0; imageIndex < params[i].getMipMaps(); imageIndex++){
-				DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
-				instance.setInput( getInput(i) );
-				BufferedImage result;
-				result = instance.read(imageIndex);
-				assertNotNull(result);
+		for (TestParams param : params){
+			for (int arraySize = 0; arraySize < param.getArraySize(); arraySize++){
+				for (int imageIndex = 0; imageIndex < param.getMipMaps(); imageIndex++){
+					DDSImageReader instance = new DDSImageReader( new DDSImageReaderSpi() );
+					instance.setInput( getInput(param) );
+					BufferedImage result;
+					result = instance.read(imageIndex + (param.getMipMaps() * arraySize));
+					assertNotNull(param.getName(), result);
+				}
 			}
 		}
 	}
@@ -274,7 +300,9 @@ public class DDSImageReaderTest {
 	public void testImageIO() throws IOException {
 		System.out.println("ImageIO");
 		for (TestParams param : params){
-			ImageIO.read(new File(param.getFilename()));
+			BufferedImage result;
+			result = ImageIO.read(new File(param.getFilename()));
+			assertNotNull(param.getName(), result);
 		}
 	}
 
@@ -293,9 +321,9 @@ public class DDSImageReaderTest {
 		}	
 	}
 
-	private Object getInput(int i){
+	private Object getInput(TestParams param){
 		Object input = null;
-		File file = new File(params[i].getFilename());
+		File file = new File(param.getFilename());
 		try {
 			input = new FileImageInputStream(file);
 		} catch (FileNotFoundException ex) {
@@ -305,29 +333,19 @@ public class DDSImageReaderTest {
 		}
 		return input;
 	}
-	
-	private BufferedImage getImage(int i) throws IOException{
-		ImageInputStream iis = ImageIO.createImageInputStream(new File(params[i].getFilename()));
-		Iterator<ImageReader> iter = ImageIO.getImageReadersBySuffix ("dds");
-		ImageReader reader = (ImageReader) iter.next();
-		reader.setInput (iis, true);
-		ImageReadParam irp = reader.getDefaultReadParam ();
-		//image = reader.read (0, irp);
-		BufferedImage image = reader.read (0);
-		// Cleanup.
-		reader.dispose ();
-		return image;
-	}
 
 	private class ThreadTester extends Thread{
 
-		private boolean failed = false;;
+		private boolean failed = false;
 
 		@Override
 		public void run() {
 			for (TestParams param : params){
 				try {
-					ImageIO.read(new File(param.getFilename()));
+					BufferedImage read = ImageIO.read(new File(param.getFilename()));
+					if (read == null) {
+						failed = true;
+					}
 				} catch (IOException ex) {
 					failed = true;
 				}
@@ -338,25 +356,35 @@ public class DDSImageReaderTest {
 			return failed;
 		}
 	}
-	
+
 	private class TestParams{
 		private final String dir = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator;
 		private final String filename;
 		private final int mipMaps;
+		private final int arraySize;
 		private final int width;
 		private final int height;
 
 		public TestParams(String filename, int mipMaps, int width, int height) {
+			this(filename, mipMaps, 1, width, height);
+		}
+
+		public TestParams(String filename, int mipMaps, int arraySize, int width, int height) {
 			this.filename = filename;
 			this.mipMaps = mipMaps;
+			this.arraySize = arraySize;
 			this.width = width;
 			this.height = height;
+		}
+
+		public int getArraySize() {
+			return arraySize;
 		}
 
 		public String getName(){
 			return filename;
 		}
-		
+
 		public String getFilename() {
 			return dir+filename;
 		}
