@@ -9,7 +9,7 @@
 == Compressed ==
  * DXT1 / BC1
  * DXT2 / BC2
- * DXT5 / BC3 + yCoCg, yCoCg scaled, Alpha Exponent (Convert with DDSUtil class)
+ * DXT5 / BC3 + yCoCg, yCoCg scaled, Alpha Exponent (Convert to RBG with the DDSUtil class)
  * ATI1 / BC4
  * ATI2 / BC5
  * DX10 in the above formats
