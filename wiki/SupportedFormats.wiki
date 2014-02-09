@@ -13,7 +13,7 @@
  * ATI1 / BC4
  * ATI2 / BC5
  * DX10 in the above formats
-
+<br>
 = NOT Supported =
 
 == Uncompressed ==
