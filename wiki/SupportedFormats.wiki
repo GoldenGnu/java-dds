@@ -12,6 +12,7 @@
  * DXT5 / BC3 + yCoCg, yCoCg scaled, Alpha Exponent (Convert with DDSUtil class)
  * ATI1 / BC4
  * ATI2 / BC5
+ * DX10 in the above formats
 
 = NOT Supported =
 
