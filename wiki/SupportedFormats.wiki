@@ -1,0 +1,31 @@
+#summary Full list of support formats
+
+= Supported =
+
+== Uncompressed ==
+ * 1-8bit per color in RBG, Luminance, Alpha
+ * A2RBG10 and A2GBR10
+
+== Compressed ==
+ * DXT1 / BC1
+ * DXT2 / BC2
+ * DXT5 / BC3 + yCoCg, yCoCg scaled, Alpha Exponent (Convert with DDSUtil class)
+ * ATI1 / BC4
+ * ATI2 / BC5
+
+= NOT Supported =
+
+== Uncompressed ==
+
+ * 16bit/32bit per color
+ * Color formats VU, CxVU, QWVU, Palette
+
+== Compressed ==
+ * DXT3
+ * DXT4
+ * DXT5nm (Issue 7)
+ * DXT5 rxgb (Issue 8)
+
+== Supported Soon™ ==
+ * YUV for uncompressed formats
+ * RGBG, GRGB, UYVY, YUY2 compressed formats
