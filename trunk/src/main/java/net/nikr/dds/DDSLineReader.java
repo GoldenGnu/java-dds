@@ -290,15 +290,17 @@ public class DDSLineReader {
 				}
 			}
 		}
-		for (int x = 0; x < width; x++) {
-			if (ddsHeader.getPixelFormat().isNormal()) {
+		if (ddsHeader.getPixelFormat().isNormal()) {
+			for (int x = 0; x < width; x++) {
 				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_ALPHA];
 				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
 				banks[BANK_BLUE][x] = (byte)xyToBlue(
 						linesColor[lineNumber][x][BANK_ALPHA],
 						linesColor[lineNumber][x][BANK_GREEN]);
 				banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_RED];
-			} else {
+			}
+		} else {
+			for (int x = 0; x < width; x++) {
 				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
 				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
 				banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
@@ -341,8 +343,8 @@ public class DDSLineReader {
 				}
 			}
 		}
-		for (int x = 0; x < width; x++) {
-			if (ddsHeader.getPixelFormat().isNormal()) {
+		if (ddsHeader.getPixelFormat().isNormal()) {
+			for (int x = 0; x < width; x++) {
 				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_ALPHA];
 				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
 				//FIXME untested! could just as well be RED, GREEN
@@ -350,7 +352,9 @@ public class DDSLineReader {
 						linesColor[lineNumber][x][BANK_GREEN],
 						linesColor[lineNumber][x][BANK_RED]);
 				banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_RED];
-			} else {
+			}
+		} else {
+			for (int x = 0; x < width; x++) {
 				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
 				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
 				banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];

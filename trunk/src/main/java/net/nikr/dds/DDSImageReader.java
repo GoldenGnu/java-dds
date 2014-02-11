@@ -80,12 +80,7 @@ public class DDSImageReader extends ImageReader {
 	@Override
 	public int getNumImages(boolean allowSearch) throws IIOException {
 		readHeader();
-		long mipMapCount = ddsHeader.getMipMapCount();
-		//DX10
-		if (ddsHeader.getHeaderDX10() != null) {
-			mipMapCount = mipMapCount * ddsHeader.getHeaderDX10().getArraySize();
-		}
-		return (int)mipMapCount;
+		return (int)ddsHeader.getMaxImageIndex();
 	}
 
 	@Override
@@ -350,11 +345,8 @@ public class DDSImageReader extends ImageReader {
 	}
 
 	private void checkIndex(int imageIndex) throws IllegalArgumentException {
-		long mipMapCount = ddsHeader.getMipMapCount();
-		if (ddsHeader.getHeaderDX10() != null) {
-			mipMapCount = mipMapCount * ddsHeader.getHeaderDX10().getArraySize();
-		}
-		if (imageIndex > mipMapCount) {
+		long maxImageIndex = ddsHeader.getMaxImageIndex();
+		if (imageIndex > maxImageIndex) {
 			throw new IllegalArgumentException("MipMap index not found");
 		}
 	}
