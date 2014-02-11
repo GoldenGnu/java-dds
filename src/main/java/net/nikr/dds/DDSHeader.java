@@ -90,7 +90,7 @@ public class DDSHeader {
 		this.caps4 = caps4;
 		this.ddsHeaderDX10 = ddsHeaderDX10;
 		this.format = calcFormat();
-		this.maxImageIndex = calcMaxImageIndex(mipMapCount);
+		this.maxImageIndex = calcMaxImageIndex(this.mipMapCount);
 	}
 
 	public Format getFormat() {
