@@ -81,6 +81,7 @@ public class DDSImageReaderTest {
 		new TestParams("25x25_dxt5.dds", 5, 25, 25),	//"bad size" - DXT5
 		new TestParams("25x25_plain.dds", 5, 25, 25),	//"bad size" - Uncompressed
 
+		//DX10
 		new TestParams("dx10" + File.separator + "25x25_dxt1.dds", 5, 2, 25, 25),	//DX10 - DXT1
 		new TestParams("dx10" + File.separator + "25x25_dxt3.dds", 5, 2, 25, 25),	//DX10 - DXT2
 		new TestParams("dx10" + File.separator + "25x25_dxt5.dds", 5, 2, 25, 25),	//DX10 - DXT5
@@ -98,29 +99,25 @@ public class DDSImageReaderTest {
 		new TestParams("dx10" + File.separator + "25x25_l8a8.dds", 5, 2, 25, 25),	//DX10 - L8A8
 		new TestParams("dx10" + File.separator + "25x25_aexp.dds", 5, 2, 25, 25),	//DX10 - AEXP
 		new TestParams("dx10" + File.separator + "25x25_ycocg.dds", 5, 2, 25, 25),	//DX10 - YCOCG
-
 		new TestParams("dx10" + File.separator + "dds_dxt1.dds", 1, 4, 256, 256),	//DX10 - DXT1
 		new TestParams("dx10" + File.separator + "dds_dxt3.dds", 1, 4, 256, 256),	//DX10 - DXT2
 		new TestParams("dx10" + File.separator + "dds_dxt5.dds", 1, 4, 256, 256),	//DX10 - DXT5
 		new TestParams("dx10" + File.separator + "dds_plain.dds", 1, 4, 256, 256),	//DX10 - Uncompressed
 
+		//GIMP
 		new TestParams("gimp" + File.separator + "a8.dds", 9, 256, 256),				//NONE A8 - OK
 		new TestParams("gimp" + File.separator + "abgr8.dds", 9, 256, 256),				//NONE ABGR8 - OK
 		new TestParams("gimp" + File.separator + "aexp.dds", 9, 256, 256),				//??? - OK
 		new TestParams("gimp" + File.separator + "alpha_exponent_dxt5.dds", 9, 256, 256),//bc3/dxt5 (Alpha Exponent)
-
 		new TestParams("gimp" + File.separator + "bc1.dds", 9, 256, 256),				//bc1/dxt1 - OK
 		new TestParams("gimp" + File.separator + "bc2.dds", 9, 256, 256),				//bc2/dxt3 - OK
 		new TestParams("gimp" + File.separator + "bc3.dds", 9, 256, 256),				//bc3/dxt5 - OK
 		new TestParams("gimp" + File.separator + "bc3n.dds", 9, 256, 256),				//bc3n/dxt5 - OK
 		new TestParams("gimp" + File.separator + "bc4.dds", 9, 256, 256),				//bc4/ati1 - OK
 		new TestParams("gimp" + File.separator + "bc5.dds", 9, 256, 256),				//bc5/ati2 - OK
-
 		new TestParams("gimp" + File.separator + "bgr8.dds", 9, 256, 256),				//NONE BGR8
-
 		new TestParams("gimp" + File.separator + "l8.dds", 9, 256, 256),				//NONE L8 - OK
 		new TestParams("gimp" + File.separator + "l8a8.dds", 9, 256, 256),				//NONE L8A8 - OK
-
 		new TestParams("gimp" + File.separator + "r3g3b2.dds", 9, 256, 256),			//NONE R3G3B2 - OK
 		new TestParams("gimp" + File.separator + "r5g6b5.dds", 9, 256, 256),			//NONE R5G6B5 - OK
 		new TestParams("gimp" + File.separator + "rgb5a1.dds", 9, 256, 256),			//NONE RGB5A1 - FAIL
@@ -128,10 +125,85 @@ public class DDSImageReaderTest {
 		new TestParams("gimp" + File.separator + "rgb10a2.dds", 9, 256, 256),			//NONE RGB10A2 - FAIL
 		new TestParams("gimp" + File.separator + "rgba4.dds", 9, 256, 256),				//NONE RGBA4 - OK
 		new TestParams("gimp" + File.separator + "rgba8.dds", 9, 256, 256),				//NONE RGBA8 - OK
-
 		new TestParams("gimp" + File.separator + "ycocg.dds", 9, 256, 256),				//NONE YCoCg
 		new TestParams("gimp" + File.separator + "ycocg_dxt5.dds", 9, 256, 256),		//DXT5 (YCoCg)
 		new TestParams("gimp" + File.separator + "ycocg_scaled_dxt5.dds", 9, 256, 256),	//DXT5 (YCoCg scaled)
+
+		//DxTex
+		new TestParams("dxtex" + File.separator + "16bit_a1r5g5b5.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "16bit_a4r4g4b4.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "16bit_a8l8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "16bit_a8r3g3b2.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "16bit_r5g6b5.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "16bit_x1r5g5b5.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "16bit_x4r4g4b4.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "24bit_r8g8b8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_a2b10g10r10.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_a2r10g10b10.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_a8b8g8r8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_a8r8g8b8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_g16r16.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_x8b8g8r8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "32bit_x8r8g8b8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "8bit_a4l4.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "8bit_a8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "8bit_l8.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "8bit_r3g3b2.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_dxt1.dds", 1, 256, 256),
+		//new TestParams("dxtex" + File.separator + "fourcc_dxt2.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_dxt3.dds", 1, 256, 256),
+		//new TestParams("dxtex" + File.separator + "fourcc_dxt4.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_dxt5.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_grgb.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_rgbg.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_uyvy.dds", 1, 256, 256),
+		new TestParams("dxtex" + File.separator + "fourcc_yuy2.dds", 1, 256, 256),
+		/*
+		16bit_a8p8.txt
+		8bit_p8.txt
+		_128bit_float_a32b32g32r32f.dds
+		_16bit_l16.dds
+		_16bit_mixed_l6v5u5.dds
+		_16bit_signed_CxV8U8.dds
+		_16bit_signed_v8u8
+		_16b_float_r16f.dds
+		_32bit_float_g16r16f.dds
+		_32bit_float_r32f.dds
+		_32bit_mixed_a2w10v10u10.dds
+		_32bit_mixed_x8l8v8u8.dds
+		_32bit_signed_q8w8v8u8.dds
+		_32bit_signed_v16u16.dds
+		_64bit_a16b16g16r16.dds
+		_64bit_float_a16b16g16r16f.dds
+		_64bit_float_g32r32f.dds
+		_64bit_signed_q16w16v16u16.dds
+		*/
+
+		//GIMP DX10
+		new TestParams("dx10_gimp" + File.separator + "a8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "abgr8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "aexp.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "ati1.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "ati2.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "bgr8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt1.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt3.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt5.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt5nm.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt5_aexp.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt5_rxgb.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt5_ycocg.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "dxt5_ycocg_scaled.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "l8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "l8a8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "r3g3b2.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "r5g6b5.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "rgb10a2.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "rgb5a1.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "rgb8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "rgba4.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "rgba8.dds", 9 , 2, 256, 256),
+		new TestParams("dx10_gimp" + File.separator + "ycocg.dds", 9 , 2, 256, 256),
 	};
 
 	@BeforeClass
@@ -306,6 +378,39 @@ public class DDSImageReaderTest {
 		}
 	}
 
+	/**
+	 * Test pixel by pixel comparing with GiMP output
+	 * @throws java.io.IOException
+	 */
+	@Test
+	public void testPixels() throws IOException {
+		System.out.println("Pixels");
+		for (TestParams param : params){
+			File file = new File(param.getCompareFilename());
+			if (!file.exists()) {
+				continue;
+			}
+			BufferedImage png = ImageIO.read(file);
+			BufferedImage dds = ImageIO.read(new File(param.getFilename()));
+			for (int x = 0; x < dds.getWidth(); x++) {
+				for (int y = 0; y < dds.getHeight(); y++) {
+					int rgbDDS = dds.getRGB(x, y);
+					int rgbPNG = png.getRGB(x, y);
+					int a = (rgbDDS >> 24 & 0xff);
+					int r = (rgbDDS >> 16 & 0xff);
+					int g = (rgbDDS >> 8 & 0xff);
+					int b = (rgbDDS & 0xff);
+					assertEquals(param.getName() + " XY: " + x + ", " + y + " Alpha)", a, (rgbPNG >> 24 & 0xff));
+					if (a != 0) {
+						assertEquals(param.getName() + " XY: " + x + ", " + y + " Blue)", b, (rgbPNG & 0xff));
+						assertEquals(param.getName() + " XY: " + x + ", " + y + " Green)", g, ((rgbPNG >> 8) & 0xff));
+						assertEquals(param.getName() + " XY: " + x + ", " + y + " Red)", r, ((rgbPNG >> 16) & 0xff));
+					}
+				}
+			}
+		}
+	}
+
 	@Test
 	public void testThreads() throws Exception {
 		System.out.println("Threads");
@@ -360,6 +465,7 @@ public class DDSImageReaderTest {
 	private class TestParams{
 		private final String dir = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "net" + File.separator + "nikr" + File.separator + "dds" + File.separator;
 		private final String filename;
+		private final String compareFilename;
 		private final int mipMaps;
 		private final int arraySize;
 		private final int width;
@@ -375,6 +481,7 @@ public class DDSImageReaderTest {
 			this.arraySize = arraySize;
 			this.width = width;
 			this.height = height;
+			this.compareFilename = filename.substring(0, filename.lastIndexOf('.')) + ".png";
 		}
 
 		public int getArraySize() {
@@ -387,6 +494,10 @@ public class DDSImageReaderTest {
 
 		public String getFilename() {
 			return dir+filename;
+		}
+
+		public String getCompareFilename() {
+			return dir+compareFilename;
 		}
 
 		public int getHeight() {

@@ -49,7 +49,6 @@ import net.nikr.dds.DDSPixelFormat.Format;
 
 public class DDSImageReader extends ImageReader {
 
-	private static final int MAGIC = 0x20534444;
 	private static final int BANDS_COUNT = 4;
 	private DDSHeader ddsHeader = null;
 	private ImageInputStream stream;
@@ -330,7 +329,7 @@ public class DDSImageReader extends ImageReader {
 	}
 
 	private long skipImage(DDSLineReader ddsLineReader, int index) {
-		long skipsBytes = 0;
+		long skipsBytes;
 		if (ddsHeader.getFormat() != Format.UNCOMPRESSED){
 			int fixedHeight = ddsLineReader.fixSize((int)ddsHeader.getHeight(index));
 			int fixedWidth = ddsLineReader.fixSize((int)ddsHeader.getWidth(index));
@@ -361,77 +360,10 @@ public class DDSImageReader extends ImageReader {
 	}
 
 	private void readHeader() throws IIOException {
-		if (ddsHeader != null) {
-			return;
-		}
-
-		if (stream == null) {
-			throw new IIOException("Failed to load header: Stream is null");
-		}
-
-		try {
-			stream.reset();
-			stream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
-
-			int magic = stream.readInt();
-			if (magic != MAGIC) {
-				throw new IIOException("Failed To Load Header: magic ("+magic+") is not MAGIC ("+MAGIC+")");
-			}
-			int size = stream.readInt();
-			if (size != 124) {
-				throw new IIOException("Failed To Load Header: size ("+size+") value is not 124");
-			}
-			long flags = stream.readInt() & 0xFFFFFFFFL;
-			long height = stream.readInt() & 0xFFFFFFFFL;
-			long width = stream.readInt() & 0xFFFFFFFFL;
-			long linearSize = stream.readInt() & 0xFFFFFFFFL;
-			long depth = stream.readInt() & 0xFFFFFFFFL;
-			long mipMapCount = stream.readInt() & 0xFFFFFFFFL;
-
-			stream.skipBytes(11 * 4);
-
-			DDSPixelFormat ddsPixelFormat = readPixelFormat();
-			long caps = stream.readInt() & 0xFFFFFFFFL;
-			long caps2 = stream.readInt() & 0xFFFFFFFFL;
-			long caps3 = stream.readInt() & 0xFFFFFFFFL;
-			long caps4 = stream.readInt() & 0xFFFFFFFFL;
-			DDSHeaderDX10 ddsHeaderDX10 = null;
-			if (ddsPixelFormat.getFormat() == Format.DX10) {
-				ddsHeaderDX10 = readHeaderDX10();
-			}
-			ddsHeader = new DDSHeader(size, flags, height, width, linearSize, depth, mipMapCount, ddsPixelFormat, caps, caps2, caps3, caps4, ddsHeaderDX10);
-		} catch (IOException ex) {
-			throw new IIOException("Failed To Load Header: " + ex.getMessage());
-		}
-	}
-
-	private DDSPixelFormat readPixelFormat() throws IOException {
-		int size = stream.readInt();
-		if (size != 32) {
-			throw new IOException("Failed load PixelFormat: File ill formed");  //should throw something...
-		}
-		long flags = stream.readInt() & 0xFFFFFFFFL;
-		long fourCC = stream.readInt() & 0xFFFFFFFFL;
-		long rgbBitCount = stream.readInt() & 0xFFFFFFFFL;
-		long rBitMask = stream.readInt() & 0xFFFFFFFFL;
-		long gBitMask = stream.readInt() & 0xFFFFFFFFL;
-		long bBitMask = stream.readInt() & 0xFFFFFFFFL;
-		long aBitMask = stream.readInt() & 0xFFFFFFFFL;
-		DDSPixelFormat ddsPixelFormat = new DDSPixelFormat(size, flags, fourCC, rgbBitCount, rBitMask, gBitMask, bBitMask, aBitMask);
-		stream.readInt();
-		return ddsPixelFormat;
-	}
-
-	private DDSHeaderDX10 readHeaderDX10() throws IIOException {
-		try {
-			long dxgiFormat = stream.readInt() & 0xFFFFFFFFL;
-			long resourceDimension = stream.readInt() & 0xFFFFFFFFL;
-			long miscFlag = stream.readInt() & 0xFFFFFFFFL;
-			long arraySize = stream.readInt() & 0xFFFFFFFFL;
-			long miscFlags2 = stream.readInt() & 0xFFFFFFFFL;
-			return new DDSHeaderDX10(dxgiFormat, resourceDimension, miscFlag, arraySize, miscFlags2);
-		} catch (IOException ex) {
-			throw new IIOException("Failed to load DX10 header: " + ex.getMessage());
+		if (ddsHeader == null) {
+			DDSHeaderReader headerReader = new DDSHeaderReader();
+			ddsHeader = headerReader.readHeader(stream);
+			ddsHeader.printValues();
 		}
 	}
 }

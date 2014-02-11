@@ -1,5 +1,5 @@
 /*
- * DDSImageReaderTest.java - This file is part of Java DDS ImageIO Plugin
+ * DDSHeaderDX10.java - This file is part of Java DDS ImageIO Plugin
  *
  * Copyright (C) 2011 Niklas Kyster Rasmussen
  * 
@@ -23,7 +23,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
  * FILE DESCRIPTION:
- * TODO Write File Description for DDSImageReaderTest.java
+ * TODO Write File Description for DDSHeaderDX10.java
  */
 
 package net.nikr.dds;
@@ -56,16 +56,16 @@ public class DDSHeaderDX10 {
 		DXGI_FORMAT_D32_FLOAT_S8X24_UINT(20),
 		DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS(21),
 		DXGI_FORMAT_X32_TYPELESS_G8X24_UINT(22),
-		DXGI_FORMAT_R10G10B10A2_TYPELESS(23),
-		DXGI_FORMAT_R10G10B10A2_UNORM(24),
-		DXGI_FORMAT_R10G10B10A2_UINT(25),
+		DXGI_FORMAT_R10G10B10A2_TYPELESS(23, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R10G10B10A2_UNORM(24, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R10G10B10A2_UINT(25, Format.UNCOMPRESSED),
 		DXGI_FORMAT_R11G11B10_FLOAT(26),
-		DXGI_FORMAT_R8G8B8A8_TYPELESS(27),
-		DXGI_FORMAT_R8G8B8A8_UNORM(28),
-		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB(29),
-		DXGI_FORMAT_R8G8B8A8_UINT(30),
-		DXGI_FORMAT_R8G8B8A8_SNORM(31),
-		DXGI_FORMAT_R8G8B8A8_SINT(32),
+		DXGI_FORMAT_R8G8B8A8_TYPELESS(27, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R8G8B8A8_UNORM(28, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R8G8B8A8_UNORM_SRGB(29, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R8G8B8A8_UINT(30, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R8G8B8A8_SNORM(31, Format.UNCOMPRESSED),
+		DXGI_FORMAT_R8G8B8A8_SINT(32, Format.UNCOMPRESSED),
 		DXGI_FORMAT_R16G16_TYPELESS(33),
 		DXGI_FORMAT_R16G16_FLOAT(34),
 		DXGI_FORMAT_R16G16_UNORM(35),
@@ -101,8 +101,8 @@ public class DDSHeaderDX10 {
 		DXGI_FORMAT_A8_UNORM(65),
 		DXGI_FORMAT_R1_UNORM(66),
 		DXGI_FORMAT_R9G9B9E5_SHAREDEXP(67),
-		DXGI_FORMAT_R8G8_B8G8_UNORM(68),
-		DXGI_FORMAT_G8R8_G8B8_UNORM(69),
+		DXGI_FORMAT_R8G8_B8G8_UNORM(68, Format.RGBG),
+		DXGI_FORMAT_G8R8_G8B8_UNORM(69, Format.GRGB),
 		DXGI_FORMAT_BC1_TYPELESS(70, Format.DXT1),
 		DXGI_FORMAT_BC1_UNORM(71, Format.DXT1),
 		DXGI_FORMAT_BC1_UNORM_SRGB(72, Format.DXT1),
@@ -118,36 +118,36 @@ public class DDSHeaderDX10 {
 		DXGI_FORMAT_BC5_TYPELESS(82, Format.ATI2),
 		DXGI_FORMAT_BC5_UNORM(83, Format.ATI2),
 		DXGI_FORMAT_BC5_SNORM(84, Format.ATI2),
-		DXGI_FORMAT_B5G6R5_UNORM(85),
-		DXGI_FORMAT_B5G5R5A1_UNORM(86),
-		DXGI_FORMAT_B8G8R8A8_UNORM(87),
-		DXGI_FORMAT_B8G8R8X8_UNORM(88),
+		DXGI_FORMAT_B5G6R5_UNORM(85, Format.UNCOMPRESSED),
+		DXGI_FORMAT_B5G5R5A1_UNORM(86, Format.UNCOMPRESSED),
+		DXGI_FORMAT_B8G8R8A8_UNORM(87, Format.UNCOMPRESSED),
+		DXGI_FORMAT_B8G8R8X8_UNORM(88, Format.UNCOMPRESSED),
 		DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM(89),
-		DXGI_FORMAT_B8G8R8A8_TYPELESS(90),
-		DXGI_FORMAT_B8G8R8A8_UNORM_SRGB(91),
-		DXGI_FORMAT_B8G8R8X8_TYPELESS(92),
-		DXGI_FORMAT_B8G8R8X8_UNORM_SRGB(93),
-		DXGI_FORMAT_BC6H_TYPELESS(94),
-		DXGI_FORMAT_BC6H_UF16(95),
-		DXGI_FORMAT_BC6H_SF16(96),
-		DXGI_FORMAT_BC7_TYPELESS(97),
-		DXGI_FORMAT_BC7_UNORM(98),
-		DXGI_FORMAT_BC7_UNORM_SRGB(99),
-		DXGI_FORMAT_AYUV(100),
-		DXGI_FORMAT_Y410(101),
-		DXGI_FORMAT_Y416(102),
-		DXGI_FORMAT_NV12(103),
-		DXGI_FORMAT_P010(104),
-		DXGI_FORMAT_P016(105),
-		DXGI_FORMAT_420_OPAQUE(106),
-		DXGI_FORMAT_YUY2(107),
-		DXGI_FORMAT_Y210(108),
-		DXGI_FORMAT_Y216(109),
-		DXGI_FORMAT_NV11(110),
-		DXGI_FORMAT_AI44(111),
-		DXGI_FORMAT_IA44(112),
-		DXGI_FORMAT_P8(113),
-		DXGI_FORMAT_A8P8(114),
+		DXGI_FORMAT_B8G8R8A8_TYPELESS(90, Format.UNCOMPRESSED),
+		DXGI_FORMAT_B8G8R8A8_UNORM_SRGB(91, Format.UNCOMPRESSED),
+		DXGI_FORMAT_B8G8R8X8_TYPELESS(92, Format.UNCOMPRESSED),
+		DXGI_FORMAT_B8G8R8X8_UNORM_SRGB(93, Format.UNCOMPRESSED),
+		DXGI_FORMAT_BC6H_TYPELESS(94, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_BC6H_UF16(95, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_BC6H_SF16(96, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_BC7_TYPELESS(97, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_BC7_UNORM(98, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_BC7_UNORM_SRGB(99, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_AYUV(100, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_Y410(101, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_Y416(102, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_NV12(103, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_P010(104, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_P016(105, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_420_OPAQUE(106, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_YUY2(107, Format.YUY2),
+		DXGI_FORMAT_Y210(108, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_Y216(109, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_NV11(110, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_AI44(111, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_IA44(112, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_P8(113, Format.NOT_SUPPORTED),
+		DXGI_FORMAT_A8P8(114, Format.NOT_SUPPORTED),
 		DXGI_FORMAT_B4G4R4A4_UNORM(115);
 		//DXGI_FORMAT_FORCE_UINT(0xffffffffUL);
 
@@ -203,12 +203,17 @@ public class DDSHeaderDX10 {
 		return format;
 	}
 
-	public void print() {
-		System.out.println("dxgiFormat: " + dxgiFormat + " (" + DxgiFormat.values()[(int)dxgiFormat].name() + ")");
-		System.out.println("resourceDimension: " + resourceDimension + " (" + D3d10ResourceDimension.values()[(int)resourceDimension].name() + ")");
-		System.out.println("miscFlag: " + miscFlag);
-		System.out.println("arraySize: " + arraySize);
-		System.out.println("reserved: " + miscFlags2);
+	public void printValues(int nSpace) {
+		String sSpace = "";
+		for (int i = 0; i < nSpace; i++){
+			sSpace = sSpace + "	";
+		}
+		System.out.println(sSpace + "DX10 Header: ");
+		System.out.println(sSpace + "	dxgiFormat: " + dxgiFormat + " (" + DxgiFormat.values()[(int)dxgiFormat].name() + ")");
+		System.out.println(sSpace + "	resourceDimension: " + resourceDimension + " (" + D3d10ResourceDimension.values()[(int)resourceDimension].name() + ")");
+		System.out.println(sSpace + "	miscFlag: " + miscFlag);
+		System.out.println(sSpace + "	arraySize: " + arraySize);
+		System.out.println(sSpace + "	reserved: " + miscFlags2);
 	}
 
 	public long getArraySize() {
@@ -217,13 +222,9 @@ public class DDSHeaderDX10 {
 
 	private Format calcFormat() {
 		if (dxgiFormat < DxgiFormat.values().length) {
-			Format format = DxgiFormat.values()[(int)dxgiFormat].getFormat();
-			if (format == Format.UNCOMPRESSED) {
-				//format.setName(null);
-			}
-			return format;
+			return DxgiFormat.values()[(int)dxgiFormat].getFormat();
 		} else {
-			return Format.NOT_DDS;
+			return Format.NOT_SUPPORTED;
 		}
 	}
 }

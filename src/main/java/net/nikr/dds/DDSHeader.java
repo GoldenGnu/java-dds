@@ -85,11 +85,16 @@ public class DDSHeader {
 	}
 
 	public Format getFormat() {
+		Format format;
 		if (ddsHeaderDX10 != null) {
-			return ddsHeaderDX10.getFormat();
+			format = ddsHeaderDX10.getFormat();
 		} else {
-			return ddsPixelFormat.getFormat();
+			format = ddsPixelFormat.getFormat();
 		}
+		if (format == Format.UNCOMPRESSED) {
+			format.setName(ddsPixelFormat.getUncompressedName());
+		}
+		return format;
 	}
 
 	public long getSize() {
@@ -161,6 +166,9 @@ public class DDSHeader {
 		System.out.print("\n");
 		System.out.println("	caps3: "+caps3);
 		System.out.println("	caps4: "+caps4);
+		if (ddsHeaderDX10 != null) {
+			ddsHeaderDX10.printValues(1);
+		}
 	}
 	public DDSPixelFormat getPixelFormat() {
 		return ddsPixelFormat;

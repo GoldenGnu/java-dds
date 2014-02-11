@@ -51,8 +51,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
@@ -69,12 +67,14 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.SwingWorker;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.Border;
 
 
@@ -134,6 +134,16 @@ public class Viewer{
 		jFileChooser.setAcceptAllFileFilterUsed(false);
 		jFileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		jFileChooser.setFileFilter(new DdsFilter(true));
+		try {
+			File dir = new File(Viewer.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+			dir = new File(dir.getAbsolutePath() + File.separator + "test-classes\\net\\nikr\\dds");
+			System.out.println(dir.getAbsolutePath());
+			if (dir.exists()) {
+				jFileChooser.setCurrentDirectory(dir);
+			}
+		} catch (URISyntaxException ex) {
+			//No problem :)
+		}
 		
 		JPanel jPanel = new JPanel();
 		GroupLayout groupLayout = new GroupLayout(jPanel);
@@ -176,42 +186,32 @@ public class Viewer{
 		
 		
 		jSpaceLabel = new JLabel();
-		jSpaceLabel.setBorder(border);
 		
 		jModeLabel = new JLabel("  Mode: RBG");
-		//jModeLabel.setHorizontalAlignment(JLabel.CENTER);
 		jModeLabel.setBorder(border);
 		
 		jFormatLabel = new JLabel();
-		//jFormatLabel.setHorizontalAlignment(JLabel.CENTER);
 		jFormatLabel.setBorder(border);
 		
-		jAlphaLabel = new JLabel("  A:  -");
-		//jAlphaLabel.setHorizontalAlignment(JLabel.CENTER);
+		jAlphaLabel = new JLabel();
 		jAlphaLabel.setBorder(border);
 		
-		jRedLabel = new JLabel("  R:  -");
-		//jRedLabel.setHorizontalAlignment(JLabel.CENTER);
+		jRedLabel = new JLabel();
 		jRedLabel.setBorder(border);
 		
-		jGreenLabel = new JLabel("  G:  -");
-		//jGreenLabel.setHorizontalAlignment(JLabel.CENTER);
+		jGreenLabel = new JLabel();
 		jGreenLabel.setBorder(border);
 		
-		jBlueLabel = new JLabel("  B:  -");
-		//jBlueLabel.setHorizontalAlignment(JLabel.CENTER);
+		jBlueLabel = new JLabel();
 		jBlueLabel.setBorder(border);
 		
 		jDimensionLabel = new JLabel();
-		//jDimensionLabel.setHorizontalAlignment(JLabel.CENTER);
 		jDimensionLabel.setBorder(border);
 		
 		jMipMapLabel = new JLabel();
-		//jMipMapLabel.setHorizontalAlignment(JLabel.CENTER);
 		jMipMapLabel.setBorder(border);
 		
-		jPosLabel = new JLabel("  Pos:  -");
-		//jPosLabel.setHorizontalAlignment(JLabel.CENTER);
+		jPosLabel = new JLabel();
 		jPosLabel.setBorder(border);
 	
 		groupLayout.setHorizontalGroup(
@@ -221,8 +221,6 @@ public class Viewer{
 				)
 				.addComponent(jSeparator)
 				.addGroup(groupLayout.createSequentialGroup()
-					.addGap(2)
-					.addComponent(jSpaceLabel, 10, 10, Integer.MAX_VALUE)
 					.addGap(2)
 					.addComponent(jFormatLabel, 200, 200, 200)
 					.addGap(2)
@@ -242,6 +240,7 @@ public class Viewer{
 					.addGap(2)
 					.addComponent(jBlueLabel, 40, 40, 40)
 					.addGap(2)
+					.addComponent(jSpaceLabel, 0, 0, Integer.MAX_VALUE)
 				)
 				
 		);
@@ -251,7 +250,6 @@ public class Viewer{
 				.addComponent(jSeparator, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
 				.addGap(2)
 				.addGroup(groupLayout.createParallelGroup()
-					
 					.addComponent(jSpaceLabel, 22, 22, 22)
 					.addComponent(jFormatLabel, 22, 22, 22)
 					.addComponent(jModeLabel, 22, 22, 22)
@@ -357,6 +355,8 @@ public class Viewer{
 		jFrame.addKeyListener(listener);
 		jFrame.setMinimumSize(jPanel.getMinimumSize());
 		jFrame.setVisible(true);
+
+		clearFile();
 	}
 	
 	public static void main(String[] args) {
@@ -382,8 +382,14 @@ public class Viewer{
 		String lookAndFeel = UIManager.getSystemLookAndFeelClassName(); //System
 		try {
 			UIManager.setLookAndFeel(lookAndFeel);
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			//Use default, no problem
+		} catch (InstantiationException e) {
+			//Use default, no problem
+		} catch (IllegalAccessException e) {
+			//Use default, no problem
+		} catch (UnsupportedLookAndFeelException e) {
+			//Use default, no problem
 		}
 	}
 	
@@ -395,31 +401,33 @@ public class Viewer{
 	}
 	
 	private void loadFile(){
-		if (!files.isEmpty()) loadFile(files.get(fileIndex), mipMap);
+		if (!files.isEmpty()) {
+			loadFile(files.get(fileIndex), mipMap);
+		}
 	}
 	
 	private void loadFile(File file){
-		if (!files.isEmpty()) loadFile(file, 0);
+		if (!files.isEmpty()) {
+			loadFile(file, 0);
+		}
 	}
 	
 	private void loadFile(File file, int imageIndex){
 		LoadFile load = new LoadFile(file, imageIndex);
 		load.execute();
 	}
-	
-	private int getMipMaps(){
-		if (files.isEmpty()) return 0;
-        Iterator<ImageReader> iterator = ImageIO.getImageReadersBySuffix("dds");
-        if (iterator.hasNext()){
-			try {
-				ImageReader imageReader = iterator.next();
-				imageReader.setInput(new FileImageInputStream(files.get(fileIndex)));
-				return imageReader.getNumImages(true);
-			} catch (Exception ex) {
-				System.out.println("getMipMaps fail...");
-			}
-        }
-		return 1;
+
+	private void clearFile() {
+		jFormatLabel.setText("  Format:  -");
+		jAlphaLabel.setText("  A:  -");
+		jRedLabel.setText("  R:  -");
+		jGreenLabel.setText("  G:  -");
+		jBlueLabel.setText("  B:  -");
+		jDimensionLabel.setText("  Size:  -");
+		jMipMapLabel.setText("  MipMap:  -");
+		jPosLabel.setText("  Pos:  -");
+		jImageLabel.setIcon(null);
+		jFrame.setTitle("DDS Viewer");
 	}
 	
 	private void update(){
@@ -448,17 +456,6 @@ public class Viewer{
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if (ACTION_OPEN.equals(e.getActionCommand())){
-				File dir;
-				try {
-					dir = new File(Viewer.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
-					dir = new File(dir.getAbsolutePath() + File.separator + "test-classes\\net\\nikr\\dds");
-					System.out.println(dir.getAbsolutePath());
-					if (dir.exists()) {
-						jFileChooser.setCurrentDirectory(dir);
-					}
-				} catch (URISyntaxException ex) {
-					
-				}
 				int returnVal = jFileChooser.showOpenDialog(jFrame);
 				if (returnVal == JFileChooser.APPROVE_OPTION) {
 					File file = jFileChooser.getSelectedFile();
@@ -538,11 +535,6 @@ public class Viewer{
 
 		@Override
 		public void mouseExited(MouseEvent e) {
-			jAlphaLabel.setText("");
-			jRedLabel.setText("");
-			jGreenLabel.setText("");
-			jBlueLabel.setText("");
-			jPosLabel.setText("");
 			jAlphaLabel.setText("  A:  -");
 			jRedLabel.setText("  R:  -");
 			jGreenLabel.setText("  G:  -");
@@ -582,7 +574,7 @@ public class Viewer{
 					if (!updating){
 						updating = true;
 						mipMap--;
-						if (mipMap >= 0 && mipMap < getMipMaps()){
+						if (mipMap >= 0 && mipMap < item.getMapMapCount()){
 							loadFile();
 						} else {
 							mipMap++;
@@ -596,7 +588,7 @@ public class Viewer{
 					if (!updating){
 						updating = true;
 						mipMap++;
-						if (mipMap >= 0 && mipMap < getMipMaps()){
+						if (mipMap >= 0 && mipMap < item.getMapMapCount()){
 							loadFile();
 						} else {
 							mipMap--;
@@ -640,11 +632,13 @@ public class Viewer{
 	}
 	
 	private static class Item{
-		private BufferedImage image;
-		private File file;
+		private final BufferedImage image;
+		private final File file;
+		private final int mapMapCount;
 
-		public Item(BufferedImage image, File file) {
+		public Item(BufferedImage image, int mapMapCount, File file) {
 			this.image = image;
+			this.mapMapCount = mapMapCount;
 			this.file = file;
 		}
 
@@ -655,12 +649,16 @@ public class Viewer{
 		public BufferedImage getImage() {
 			return image;
 		}
+
+		public int getMapMapCount() {
+			return mapMapCount;
+		}
 	}
 	
 	private class LoadFile extends SwingWorker<Void, Void> {
 
-		private File file;
-		private int imageIndex;
+		private final File file;
+		private final int imageIndex;
 
 		public LoadFile(File file, int imageIndex) {
 			this.file = file;
@@ -669,20 +667,24 @@ public class Viewer{
 		
 		@Override
 		protected Void doInBackground() throws Exception {
-			if (files.isEmpty()) return null;
+			if (files.isEmpty()) {
+				return null;
+			}
 			Iterator<ImageReader> iterator = ImageIO.getImageReadersBySuffix("dds");
 			if (iterator.hasNext()){
 				ImageReader imageReader = iterator.next();
 				imageReader.setInput(new FileImageInputStream(file));
 				mipMapMax = imageReader.getNumImages(true);
-				if (imageIndex > mipMapMax || imageIndex < 0) throw new IOException("imageIndex ("+imageIndex+") not found");
+				if (imageIndex > mipMapMax || imageIndex < 0) {
+					throw new IOException("imageIndex ("+imageIndex+") not found");
+				}
 				BufferedImage image = imageReader.read(imageIndex);
 				format = imageReader.getFormatName();
 				if (type == ColorType.YCOCG) DDSUtil.decodeYCoCg(image);
 				if (type == ColorType.YCOCG_SCALED) DDSUtil.decodeYCoCgScaled(image);
 				if (type == ColorType.ALPHA_EXPONENT) DDSUtil.decodeAlphaExponent(image);
 				if (!alpha || !red || !green || !blue) DDSUtil.showColors(image, alpha, red, green, blue);
-				item = new Item(image, file);
+				item = new Item(image, mipMapMax, file);
 			}
 			return null;
 		}
@@ -695,7 +697,8 @@ public class Viewer{
 				get();
 				update();
 			} catch (Exception ex) {
-				
+				clearFile();
+				JOptionPane.showMessageDialog(jFrame, "Failed to load image", "Error loading image", JOptionPane.WARNING_MESSAGE);
 			}
 		}
 	}
