@@ -64,6 +64,9 @@ public class DDSPixelFormat {
 		UYVY	("UYVY"), //Working
 		YUY2	("YUY2"), //Working
 		DX10	("DX10"), //Working (beta quality)
+		ATC		("ATC"),  //NO
+		ATCA	("ATCA"), //NO
+		ATCI	("ATCI"), //NO
 		;
 
 		private String name;

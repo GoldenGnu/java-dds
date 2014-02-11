@@ -67,6 +67,9 @@ public class DDSHeader {
     private final long caps3;
     private final long caps4;
 	private final DDSHeaderDX10 ddsHeaderDX10;
+	//Calculated
+	private final Format format;
+	private final long maxImageIndex;
 
 	public DDSHeader(long size, long flags, long height, long width, long pitchOrLinearSize, long depth, long mipMapCount, DDSPixelFormat ddsPixelFormat, long caps, long caps2, long caps3, long caps4, DDSHeaderDX10 ddsHeaderDX10) {
 		this.size = size;
@@ -75,25 +78,22 @@ public class DDSHeader {
 		this.width = width;
 		this.pitchOrLinearSize = pitchOrLinearSize;
 		this.depth = depth;
-		this.mipMapCount = mipMapCount;
+		if (mipMapCount <= 0) { //Minimum one image inside (Also when the mapmap flag is not set)
+			this.mipMapCount = 1;
+		} else {
+			this.mipMapCount = mipMapCount;
+		}
 		this.ddsPixelFormat = ddsPixelFormat;
 		this.caps = caps;
 		this.caps2 = caps2;
 		this.caps3 = caps3;
 		this.caps4 = caps4;
 		this.ddsHeaderDX10 = ddsHeaderDX10;
+		this.format = calcFormat();
+		this.maxImageIndex = calcMaxImageIndex(mipMapCount);
 	}
 
 	public Format getFormat() {
-		Format format;
-		if (ddsHeaderDX10 != null) {
-			format = ddsHeaderDX10.getFormat();
-		} else {
-			format = ddsPixelFormat.getFormat();
-		}
-		if (format == Format.UNCOMPRESSED) {
-			format.setName(ddsPixelFormat.getUncompressedName());
-		}
 		return format;
 	}
 
@@ -124,12 +124,13 @@ public class DDSHeader {
 		return depth;
 	}
 	public long getMipMapCount() {
-		if (mipMapCount <= 0) { //Minimum one image inside (Also when the mapmap flag is not set)
-			return 1;
-		} else {
-			return mipMapCount;
-		}
+		return mipMapCount;
 	}
+
+	public long getMaxImageIndex() {
+		return maxImageIndex;
+	}
+
 	public void printValues(){
 		System.out.println("DDSHeader:");
 		System.out.println("	size: "+size);
@@ -176,5 +177,26 @@ public class DDSHeader {
 
 	public DDSHeaderDX10 getHeaderDX10() {
 		return ddsHeaderDX10;
+	}
+
+	private Format calcFormat() {
+		Format calcFormat;
+		if (ddsHeaderDX10 != null) {
+			calcFormat = ddsHeaderDX10.getFormat();
+		} else {
+			calcFormat = ddsPixelFormat.getFormat();
+		}
+		if (calcFormat == Format.UNCOMPRESSED) {
+			calcFormat.setName(ddsPixelFormat.getUncompressedName());
+		}
+		return calcFormat;
+	}
+
+	private long calcMaxImageIndex(long mipMapCount) {
+		//DX10
+		if (ddsHeaderDX10 != null) {
+			mipMapCount = mipMapCount * ddsHeaderDX10.getArraySize();
+		}
+		return mipMapCount;
 	}
 }
