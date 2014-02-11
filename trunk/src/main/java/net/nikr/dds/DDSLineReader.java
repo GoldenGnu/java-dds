@@ -57,6 +57,13 @@ public class DDSLineReader {
 				bytes = new byte[(height*width*byteCount)];
 				stream.readFully(bytes);
 				break;
+			case RGBG:
+			case GRGB:
+			case UYVY:
+			case YUY2:
+				bytes = new byte[(height*width*2)];
+				stream.readFully(bytes);
+				break;
 			case DXT1:
 			case ATI1:
 				width = fixSize(width);
@@ -72,7 +79,7 @@ public class DDSLineReader {
 				bytes = new byte[16*(int)Math.max(1, width/4)*(int)Math.max(1, height/4)];
 				stream.readFully(bytes);
 				break;
-			case NOT_DDS:
+			case NOT_SUPPORTED:
 				throw new IOException("Not a supported format!");
 			default:
 				throw new IOException(format.getName()+" is not a supported format!");
@@ -97,6 +104,12 @@ public class DDSLineReader {
 			case UNCOMPRESSED:
 				decodeUncompressed(bytes, ddsHeader, banks, width, y);
 				break;
+			case RGBG:
+			case GRGB:
+			case UYVY:
+			case YUY2:
+				decodeYUV(bytes, ddsHeader.getFormat(), banks, width, y);
+				break;
 			case DXT1:
 			case DXT3:
 			case DXT5:
@@ -106,10 +119,68 @@ public class DDSLineReader {
 			case ATI2:
 				decodeATI(bytes, ddsHeader, banks, width, y);
 				break;
-			case NOT_DDS:
+			case NOT_SUPPORTED:
 				throw new IOException("Not a supported format!");
 			default:
 				throw new IOException(ddsHeader.getFormat().getName()+" is not a supported format!");
+		}
+	}
+
+	private void decodeYUV(byte[] bytes, Format format, byte [][] banks, int width, int y) throws IOException{
+		long pixel, r = 0, g1 = 0, b = 0, g2 = 0, u = 0, y1 = 0, v = 0, y2 = 0;
+		int byteCount = 2;
+		int lineOffset = y * width * byteCount;
+		for (int x = 0; x < width; x++) {
+			if (x % 2 == 0) {
+				int fixedX = (int)Math.ceil(x / 2.);
+				pixel = (bytes[(lineOffset+fixedX*4)+0] & 0xFFL)
+						| ((bytes[(lineOffset+fixedX*4)+1] & 0xFFL) << 8)
+						| ((bytes[(lineOffset+fixedX*4)+2] & 0xFFL) << 16)
+						| ((bytes[(lineOffset+fixedX*4)+3] & 0xFFL) << 24);
+				if (format == Format.RGBG) {
+					g1 = pixel & 0xFF;
+					r = pixel >> 8 & 0xFF;
+					g2 = pixel >> 16 & 0xFF;
+					b = pixel >> 24 & 0xFF;
+				} else if (format == Format.GRGB) {
+					r = pixel & 0xFF;
+					g1 = pixel >> 8 & 0xFF;
+					b = pixel >> 16 & 0xFF;
+					g2 = pixel >> 24 & 0xFF;
+				} else if (format == Format.UYVY) {
+					u = pixel & 0xFF;
+					y1 = pixel >> 8 & 0xFF;
+					v = pixel >> 16 & 0xFF;
+					y2 = pixel >> 24 & 0xFF;
+					
+				} else if (format == Format.YUY2) {
+					y1 = pixel & 0xFF;
+					u = pixel >> 8 & 0xFF;
+					y2 = pixel >> 16 & 0xFF;
+					v = pixel >> 24 & 0xFF;
+				}
+				if (format == Format.UYVY || format == Format.YUY2) {
+					int[] rbg = yuvToRBG(y1, u, v);
+					b = rbg[BANK_BLUE];
+					g1 = rbg[BANK_GREEN];
+					r = rbg[BANK_RED];
+				}
+				banks[BANK_RED][x] = (byte) r;
+				banks[BANK_GREEN][x] = (byte) g1;
+				banks[BANK_BLUE][x] = (byte) b;
+				banks[BANK_ALPHA][x] = (byte) 255;
+			} else {
+				if (format == Format.UYVY || format == Format.YUY2) {
+					int[] rbg = yuvToRBG(y2, u, v);
+					b = rbg[BANK_BLUE];
+					g2 = rbg[BANK_GREEN];
+					r = rbg[BANK_RED];
+				}
+				banks[BANK_RED][x] = (byte) r;
+				banks[BANK_GREEN][x] = (byte) g2;
+				banks[BANK_BLUE][x] = (byte) b;
+				banks[BANK_ALPHA][x] = (byte) 255;
+			}
 		}
 	}
 
@@ -141,13 +212,22 @@ public class DDSLineReader {
 			b = 255;
 
 			if ((pf.getRgbBitCount() == 32)
-					&& (pf.getMaskRed() == 0x3ff00000l)
-					&& (pf.getMaskGreen() == 0xffc00l)
-					&& (pf.getMaskBlue() == 0x3ffl) && (pf.getMaskAlpha() == 0xc0000000l)){
-				//RGB10A2
-				r = (pixel >> pf.getShiftRed()) >> 2;
+					//RGB10A2
+					&& ((pf.getMaskRed() == 1023)
+					&& (pf.getMaskGreen() == 1047552)
+					&& (pf.getMaskBlue() == 1072693248)
+					&& (pf.getMaskAlpha() == 3221225472L))
+					||
+					//BGR10A2
+					((pf.getMaskRed() == 1072693248)
+					&& (pf.getMaskGreen() == 1047552)
+					&& (pf.getMaskBlue() == 1023)
+					&& (pf.getMaskAlpha() == 3221225472L))
+					){
+				
+				b = (pixel >> pf.getShiftRed()) >> 2;
 				g = (pixel >> pf.getShiftGreen()) >> 2;
-				b = (pixel >> pf.getShiftBlue()) >> 2;
+				r = (pixel >> pf.getShiftBlue()) >> 2;
 				if(pf.isAlphaPixels()){
 					a = (pixel >> pf.getShiftAlpha() << (8 - pf.getBitsAlpha()) & pf.getMaskFixedAlpha()) * 255 / pf.getMaskFixedAlpha();
 				}
@@ -164,6 +244,19 @@ public class DDSLineReader {
 				if (pf.getMaskFixedBlue() != 0){
 					b = (pixel >> pf.getShiftBlue() << (8 - pf.getBitsBlue()) & pf.getMaskFixedBlue()) * 255 / pf.getMaskFixedBlue();
 				}
+			}
+			if (pf.isYUV()) {
+				int[] rbg = yuvToRBG(r, g, b);
+				b = rbg[BANK_BLUE];
+				g = rbg[BANK_GREEN];
+				r = rbg[BANK_RED];
+			}
+			if (pf.isLuminance()) {
+				g = r;
+				b = r;
+			}
+			if (pf.isQWVU()) {
+				
 			}
 			
 			banks[BANK_RED][x] = (byte) r;
@@ -198,10 +291,19 @@ public class DDSLineReader {
 			}
 		}
 		for (int x = 0; x < width; x++) {
-			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
-			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
-			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
-			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
+			if (ddsHeader.getPixelFormat().isNormal()) {
+				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_ALPHA];
+				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
+				banks[BANK_BLUE][x] = (byte)xyToBlue(
+						linesColor[lineNumber][x][BANK_ALPHA],
+						linesColor[lineNumber][x][BANK_GREEN]);
+				banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_RED];
+			} else {
+				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
+				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
+				banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
+				banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
+			}
 		}
 		lineNumber++;
 	}
@@ -232,7 +334,7 @@ public class DDSLineReader {
 					decodeAtiAndDxt5AlphaBlock(bytes, 16, 8, x, (16 * fixedWidth / 4 * y / 4), BANK_RED);
 					for (int yi = 0; yi < 4 ; yi++){
 						for (int xi = 0; xi < 4; xi++){
-							linesColor[yi][x+xi][BANK_BLUE] = (byte) 0;
+							linesColor[yi][x+xi][BANK_BLUE] = (byte) 255;
 							linesColor[yi][x+xi][BANK_ALPHA] = (byte) 255;
 						}
 					}
@@ -240,10 +342,20 @@ public class DDSLineReader {
 			}
 		}
 		for (int x = 0; x < width; x++) {
-			banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
-			banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
-			banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
-			banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
+			if (ddsHeader.getPixelFormat().isNormal()) {
+				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_ALPHA];
+				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
+				//FIXME untested! could just as well be RED, GREEN
+				banks[BANK_BLUE][x] = (byte)xyToBlue(
+						linesColor[lineNumber][x][BANK_GREEN],
+						linesColor[lineNumber][x][BANK_RED]);
+				banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_RED];
+			} else {
+				banks[BANK_RED][x] = linesColor[lineNumber][x][BANK_RED];
+				banks[BANK_GREEN][x] = linesColor[lineNumber][x][BANK_GREEN];
+				banks[BANK_BLUE][x] = linesColor[lineNumber][x][BANK_BLUE];
+				banks[BANK_ALPHA][x] = linesColor[lineNumber][x][BANK_ALPHA];
+			}
 		}
 		lineNumber++;
 	}
@@ -430,4 +542,29 @@ public class DDSLineReader {
 		
 		return color;
 	}
+
+	private int[] yuvToRBG(long y, long u, long v) {
+		int[] color = new int[3];
+		color[BANK_RED] = (int)(1.164 * (y - 16) + 1.596 * (v - 128));
+		color[BANK_GREEN] = (int)(1.164 * (y - 16) - 0.813 * (v - 128) - 0.391 * (u - 128));
+		color[BANK_BLUE] = (int)(1.164 * (y - 16) + 2.018 * (u - 128));
+		return color;
+	}
+
+	public int xyToBlue(byte x, byte y) {
+		double nx = 2.0 * ((double)(x & 0xFF) / 255.0) - 1.0;
+		double ny = 2.0 * ((double)(y & 0xFF)  / 255.0) - 1.0;
+		double nz = 0.0;
+		double d = 1.0 - nx * nx + ny * ny;
+		int z;
+
+		if(d > 0) {
+			nz = Math.sqrt(d);
+		}
+
+		z = (int)(255.0 * (nz + 1.0) / 2.0);
+		z = Math.max(0, Math.min(255, z));
+
+		return z;
+   }
 }

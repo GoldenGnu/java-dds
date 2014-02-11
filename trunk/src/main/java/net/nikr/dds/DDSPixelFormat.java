@@ -38,37 +38,44 @@ public class DDSPixelFormat {
 	public static final int ALPHAPIXELS = 0x1; //0x00000001;
 	public static final int ALPHA = 0x2; //0x00000001;
 	public static final int FOURCC = 0x4;
+	public static final int PALETTEINDEXED8 = 0x20;
+	public static final int QWVU = 0x80000;
 	public static final int RGB = 0x40;
 	public static final int YUV = 0x200;
 	public static final int LUMINANCE = 0x20000;
-	
+	public static final int NORMAL = 0x80000000;
+		
 	//Format
 	public enum Format {
-		NOT_DDS ("NOT DDS FORMAT"),
-		UNCOMPRESSED("UNCOMPRESSED"),
-		DXT1	("DXT1"),
-		DXT2	("DXT2"),
-		DXT3	("DXT3"),
-		DXT4	("DXT4"),
-		DXT5	("DXT5"),
-		BC4U	("BC4U"),
-		BC4S	("BC4S"),
-		ATI1	("ATI1"),
-		ATI2	("ATI2"),
-		BC5S	("BC5S"),
-		RGBG	("RGBG"),
-		GRGB	("GRGB"),
-		UYVY	("UYVY"),
-		YUY2	("YUY2"),
-		DX10	("DX10"),
+		NOT_SUPPORTED ("NOT A SUPPORTED FORMAT", 0),
+		UNCOMPRESSED("UNCOMPRESSED", 0),
+		DXT1	("DXT1"), //Working
+		DXT2	("DXT2"), //NO
+		DXT3	("DXT3"), //Working
+		DXT4	("DXT4"), //NO
+		DXT5	("DXT5"), //Working
+		BC4U	("BC4U"), //?
+		BC4S	("BC4S"), //?
+		ATI1	("ATI1"), //Working
+		ATI2	("ATI2"), //Working
+		BC5S	("BC5S"), //?
+		RGBG	("RGBG"), //Working
+		GRGB	("GRGB"), //Working
+		UYVY	("UYVY"), //Working
+		YUY2	("YUY2"), //Working
+		DX10	("DX10"), //Working (beta quality)
 		;
 
 		private String name;
 		private final int fourCC;
 
 		private Format(String name) {
+			this(name, fourCC(name));
+		}
+
+		private Format(String name, int fourCC) {
 			this.name = name;
-			this.fourCC = fourCC(name);
+			this.fourCC = fourCC;
 		}
 
 		public int getFourCC() {
@@ -83,7 +90,7 @@ public class DDSPixelFormat {
 			this.name = name;
 		}
 		
-		private int fourCC(String cc){
+		private static int fourCC(String cc){
 			int result = 0;
 			for ( int i = cc.length()-1; i >= 0; i--) {
 				result = ( result << 8 ) + (int) cc.charAt( i );
@@ -220,8 +227,14 @@ public class DDSPixelFormat {
 	public boolean isYUV(){
 		return ((flags & YUV) != 0);
 	}
+	public boolean isQWVU(){
+		return ((flags & QWVU) != 0);
+	}
 	public boolean isLuminance(){
 		return ((flags & LUMINANCE) != 0);
+	}	
+	public boolean isNormal(){
+		return ((flags & NORMAL) != 0);
 	}	
 		
 	public void printValues(){
@@ -243,14 +256,41 @@ public class DDSPixelFormat {
 		if ((flags & RGB) != 0) System.out.print(" (RGB)");
 		if ((flags & YUV) != 0) System.out.print(" (YUV)");
 		if ((flags & LUMINANCE) != 0) System.out.print(" (LUMINANCE)");
+		if ((flags & PALETTEINDEXED8) != 0) System.out.print(" (PALETTEINDEXED8)");
+		if ((flags & QWVU) != 0) System.out.print(" (QWVU)");
+		if ((flags & NORMAL) != 0) System.out.print(" (NORMAL)");
 		System.out.print("\n");
-		System.out.println(sSpace+"	fourCC: "+fourCC+" ("+getFormat().getName()+")");
+		String sFourCC = "";
+		sFourCC += (char) (fourCC & 0xFF);
+		sFourCC += (char) ((fourCC >> 8) & 0xFF);
+		sFourCC += (char) ((fourCC >> 16) & 0xFF);
+		sFourCC += (char) ((fourCC >> 24) & 0xFF);
+		System.out.println(sSpace+"	fourCC: "+fourCC+" ("+getFormat().getName()+" - " + sFourCC +")");
 		System.out.println(sSpace+"	rgbBitCount: "+rgbBitCount);
 		System.out.println(sSpace+"	rMask: "+Long.toHexString(rMask)+" int("+rMask+") fixed("+Long.toHexString(rMaskFixed)+") shift("+rShift+") bits("+rBits+")");
 		System.out.println(sSpace+"	gMask: "+Long.toHexString(gMask)+" int("+gMask+") fixed("+Long.toHexString(gMaskFixed)+") shift("+gShift+") bits("+gBits+")");
 		System.out.println(sSpace+"	bMask: "+Long.toHexString(bMask)+" int("+bMask+") fixed("+Long.toHexString(bMaskFixed)+") shift("+bShift+") bits("+bBits+")");
 		System.out.println(sSpace+"	aMask: "+Long.toHexString(aMask)+" int("+aMask+") fixed("+Long.toHexString(aMaskFixed)+") shift("+aShift+") bits("+aBits+")");
 		System.out.println(sSpace+"	Format: "+getFormat().getName());
+	}
+
+	public String getUncompressedName() {
+		List<FormatItem> list = new ArrayList<FormatItem>();
+		if (isLuminance()){
+			if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
+			if (rMask != 0) list.add(new FormatItem("L", rMask, rBits));
+		} else {
+			if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
+			if (rMask != 0) list.add(new FormatItem("R", rMask, rBits));
+			if (gMask != 0) list.add(new FormatItem("G", gMask, gBits));
+			if (bMask != 0) list.add(new FormatItem("B", bMask, bBits));
+		}
+		Collections.sort(list);
+		String s = "";
+		for (FormatItem item : list){
+			s = s + item.toString();
+		}
+		return rgbBitCount+"bit-"+s;
 	}
 	
 	private char shift(long mask){
@@ -274,22 +314,6 @@ public class DDSPixelFormat {
 	
 	private Format calcFormat(){
 		if ((flags & FOURCC) == 0){
-			List<FormatItem> list = new ArrayList<FormatItem>();
-			if (isLuminance()){
-				if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
-				if (rMask != 0) list.add(new FormatItem("L", rMask, rBits));
-			} else {
-				if (aMask != 0) list.add(new FormatItem("A", aMask, aBits));
-				if (rMask != 0) list.add(new FormatItem("R", rMask, rBits));
-				if (gMask != 0) list.add(new FormatItem("G", gMask, gBits));
-				if (bMask != 0) list.add(new FormatItem("B", bMask, bBits));
-			}
-			Collections.sort(list);
-			String s = "";
-			for (FormatItem item : list){
-				s = s + item.toString();
-			}
-			Format.UNCOMPRESSED.setName(rgbBitCount+"bit-"+s);
 			return Format.UNCOMPRESSED;
 		} else {
 			for (Format formatSearch : Format.values()) {
@@ -298,7 +322,7 @@ public class DDSPixelFormat {
 				}
 			}
 		}
-		return Format.NOT_DDS;
+		return Format.NOT_SUPPORTED;
 	}
 	
 	private static class FormatItem implements Comparable<FormatItem>{
@@ -313,7 +337,7 @@ public class DDSPixelFormat {
 			this.mask = mask;
 			this.bits = bits;
 		}
-		
+
 		@Override
 		public String toString(){
 			return name+bits;
