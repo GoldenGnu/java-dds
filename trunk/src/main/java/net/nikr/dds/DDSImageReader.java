@@ -363,7 +363,7 @@ public class DDSImageReader extends ImageReader {
 		if (ddsHeader == null) {
 			DDSHeaderReader headerReader = new DDSHeaderReader();
 			ddsHeader = headerReader.readHeader(stream);
-			ddsHeader.printValues();
+			//ddsHeader.printValues();
 		}
 	}
 }
