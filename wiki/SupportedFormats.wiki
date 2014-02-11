@@ -24,9 +24,9 @@
 == Compressed ==
  * DXT3
  * DXT4
- * DXT5nm (Issue 7)
- * DXT5 rxgb (Issue 8)
 
-== Supported Soon™ ==
- * YUV for uncompressed formats
+== Not included in 1.0.0 ==
+Added in r33:
+ * YUV for uncompressed formats _(untested)_
  * RGBG, GRGB, UYVY, YUY2 compressed formats
+ * DXT5nm
