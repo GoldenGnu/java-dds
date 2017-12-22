@@ -1,5 +1,5 @@
 # Java DDS ImageIO Plugin
-## Supports reading
+### Supports reading
   * **DXT1** / BC1
   * **DXT2** / BC2
   * **DXT5** / BC3
@@ -7,7 +7,7 @@
   * **ATI2** / BC5
   * Most **Uncompressed** formats.
 _See all [supported formats](https://github.com/GoldenGnu/java-dds/wiki)._<br>
-## Does not support
+### Does not support
   * Writing
 
 ## Info
@@ -59,13 +59,11 @@ public BufferedImage read(File file, int imageIndex) throws IOException{
     return null;
 }
 ```
-<br>
-<h2>Bugs</h2>
-You can submit a bug report by creating a <a href='https://github.com/GoldenGnu/java-dds/issues/new'>new issue</a>.<br>
-<br>
-<h2>Special Thanks</h2>
-Java DDS ImageIO Plugin is based on code from the <a href='http://code.google.com/p/gimp-dds/'>GIMP DDS Plugin</a>.<br>
-<br>
-<h2>Contribute</h2>
-Want to join the project?<br>
-Send an email to niklaskr@gmail.com<br>
+## Bugs
+You can submit a bug report by creating a [new issue](https://github.com/GoldenGnu/java-dds/issues/new).
+
+## Special Thanks
+Java DDS ImageIO Plugin is based on code from the [GIMP DDS Plugin](http://code.google.com/p/gimp-dds/).
+
+## Contribute
+Want to join the project? Send an email to niklaskr@gmail.com
