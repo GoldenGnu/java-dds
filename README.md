@@ -5,14 +5,14 @@
   * **DXT5** / BC3
   * **ATI1** / BC4
   * **ATI2** / BC5
-  * Most **Uncompressed** formats.
-_See all [supported formats](https://github.com/GoldenGnu/java-dds/wiki)._<br>
+  * Most **Uncompressed** formats
+  * _See all [supported formats](https://github.com/GoldenGnu/java-dds/wiki)._
+
 ### Does not support
   * Writing
 
 ## Info
-The library is not actively being worked on, except for bug fixes and contributions.<br>
-<br>
+The library is not actively being worked on, except for bug fixes and contributions.
 
 ## Help
 
