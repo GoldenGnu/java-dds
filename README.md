@@ -6,7 +6,7 @@
   * **ATI1** / BC4
   * **ATI2** / BC5
   * Most **Uncompressed** formats.
-_See all [supported formats](https://github.com/GoldenGnu/java-dds/wiki/Supported-Formats)._<br>
+_See all [supported formats](https://github.com/GoldenGnu/java-dds/wiki)._<br>
 ## Does not support
   * Writing
 
