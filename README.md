@@ -27,13 +27,13 @@ To use in a maven project:
     </repository>
 </repositories>
 ...
-<repositories>
-    <repository>
-        <id>maven.nikr.net</id>
-        <name>maven.nikr.net</name>
-        <url>http://maven.nikr.net/</url>
-    </repository>
-</repositories>
+<dependencies>
+    <dependency>
+        <groupId>net.nikr</groupId>
+        <artifactId>dds</artifactId>
+        <version>1.0.0</version>
+    </dependency>
+</dependencies>
 ```
 ### Code Example
 
